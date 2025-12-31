@@ -1,5 +1,10 @@
 # React + Vite
 
+// Replace with the actual URL of your portrait background image
+const backgroundImage = "url('/images/sinchanbg.png')";
+// Replace with the actual URL of your Shinchan 3D model image
+const characterImage = "/images/shinchan.png";
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
