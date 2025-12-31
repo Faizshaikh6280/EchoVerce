@@ -231,7 +231,13 @@ const Avatars = () => {
       {/* --- BOTTOM NAV --- */}
       {/* Centered floating navigation */}
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30">
-        <div className="bg-[#2d0f41]/95 backdrop-blur-xl border border-white/10 rounded-2xl px-10 py-3 flex gap-12 shadow-2xl shadow-purple-900/50">
+        {/* Glass Effect Changes:
+      1. bg-[#2d0f41]/30 -> Low opacity allows background to show through
+      2. backdrop-blur-xl -> Blurs the content behind the nav
+      3. border-white/20 -> A slightly clearer border defines the glass edge
+      4. shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] -> Adds depth/lift
+  */}
+        <div className="bg-[#2d0f41]/30 backdrop-blur-xl border border-white/20 rounded-2xl px-10 py-3 flex gap-12 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]">
           {/* Home Icon */}
           <button
             onClick={() => setActiveTab("home")}
@@ -240,14 +246,15 @@ const Avatars = () => {
             <Home
               className={`w-6 h-6 transition-all duration-300 ${
                 activeTab === "home"
-                  ? "text-pink-300 scale-110"
+                  ? "text-pink-300 scale-110 drop-shadow-[0_0_8px_rgba(249,168,212,0.6)]"
                   : "text-gray-400 hover:text-pink-200"
               }`}
             />
             {activeTab === "home" && (
-              <span className="absolute -bottom-2 w-1 h-1 bg-pink-300 rounded-full"></span>
+              <span className="absolute -bottom-2 w-1 h-1 bg-pink-300 rounded-full shadow-[0_0_10px_rgba(249,168,212,0.8)]"></span>
             )}
           </button>
+
           {/* Wishlist Icon */}
           <button
             onClick={() => setActiveTab("wishlist")}
@@ -256,12 +263,12 @@ const Avatars = () => {
             <Heart
               className={`w-6 h-6 transition-all duration-300 ${
                 activeTab === "wishlist"
-                  ? "text-pink-500 fill-pink-500 scale-110"
+                  ? "text-pink-500 fill-pink-500 scale-110 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]"
                   : "text-gray-400 hover:text-pink-300"
               }`}
             />
             {activeTab === "wishlist" && (
-              <span className="absolute -bottom-2 w-1 h-1 bg-pink-500 rounded-full"></span>
+              <span className="absolute -bottom-2 w-1 h-1 bg-pink-500 rounded-full shadow-[0_0_10px_rgba(236,72,153,0.8)]"></span>
             )}
           </button>
         </div>

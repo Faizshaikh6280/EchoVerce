@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react"; // Removed useEffect
 import {
   ChevronLeft,
   Menu,
@@ -8,6 +8,8 @@ import {
   Sparkles,
   X,
   Play,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -50,61 +52,50 @@ const CharacterInteractionScreen = () => {
 
   // State
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeMode, setActiveMode] = useState("Mimic"); // 'Mimic' or 'Friend'
+  const [activeMode, setActiveMode] = useState("Mimic");
   const [isListening, setIsListening] = useState(false);
   const [showSongList, setShowSongList] = useState(false);
   const [currentSong, setCurrentSong] = useState(null);
+
+  // New State for Background Music
+  const [isBgMusicOn, setIsBgMusicOn] = useState(true);
 
   // Assets
   const backgroundImage = "url('/images/sinchanbg.png')";
   const characterImage = "/images/shinchan.png";
 
-  // --- Logic & Effects ---
-
-  // Stop Mic automatically when a song starts playing
-  useEffect(() => {
-    if (currentSong) {
-      setIsListening(false);
-    }
-  }, [currentSong]);
+  // --- Logic ---
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
   const handleBack = () => navigate(-1);
 
+  const toggleBgMusic = () => {
+    setIsBgMusicOn(!isBgMusicOn);
+    console.log(`Background Music: ${!isBgMusicOn ? "ON" : "OFF"}`);
+  };
+
   const handleMicToggle = () => {
-    // Prevent Mic usage if a song is playing
     if (currentSong) {
       console.log("Mic disabled while music is playing");
       return;
     }
-
     setIsListening(!isListening);
-    console.log(!isListening ? "Mic On" : "Mic Off");
   };
 
-  const handleMusicClick = () => {
-    setShowSongList(true); // Only opens on Icon click now
-  };
+  const handleMusicClick = () => setShowSongList(true);
 
-  const handleDanceClick = () => {
-    console.log("Dance Logged!");
-    // Trigger dance animation logic here
-  };
+  const handleDanceClick = () => console.log("Dance Logged!");
 
-  const handleModeSwitch = (mode) => {
-    setActiveMode(mode);
-    // Note: No longer opening song list here automatically
-  };
+  const handleModeSwitch = (mode) => setActiveMode(mode);
 
   const selectSong = (song) => {
     setCurrentSong(song);
+    // FIX: Turn off mic directly here instead of using useEffect
+    setIsListening(false);
     setShowSongList(false);
-    console.log(`Playing: ${song.title}`);
   };
 
-  const stopSong = () => {
-    setCurrentSong(null);
-  };
+  const stopSong = () => setCurrentSong(null);
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden font-sans bg-black">
@@ -114,23 +105,36 @@ const CharacterInteractionScreen = () => {
         style={{ backgroundImage: backgroundImage }}
       />
 
-      {/* 2. Top Navigation */}
+      {/* 2. Top Navigation (Back & Menu) */}
       <div className="absolute top-0 left-0 w-full flex justify-between items-center p-6 pt-12 z-20 pointer-events-none">
         <button
           onClick={handleBack}
-          className="pointer-events-auto w-10 h-10 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white active:scale-95 transition-all hover:bg-purple-800"
+          className="pointer-events-auto w-10 h-10 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white active:scale-95 transition-all hover:bg-purple-800 shadow-lg"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
         <button
           onClick={toggleMenu}
-          className="pointer-events-auto w-10 h-10 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white active:scale-95 transition-all hover:bg-purple-800"
+          className="pointer-events-auto w-10 h-10 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white active:scale-95 transition-all hover:bg-purple-800 shadow-lg"
         >
           <Menu className="w-5 h-5" />
         </button>
       </div>
 
-      {/* 3. Side Menu */}
+      {/* 3. Background Music Toggle */}
+      <button
+        onClick={toggleBgMusic}
+        // Fixed absolute position syntax (top-28 is roughly 7rem or 112px)
+        className="absolute top-35 right-6 z-20 pointer-events-auto w-10 h-10 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white active:scale-95 transition-all hover:bg-purple-800 shadow-lg"
+      >
+        {isBgMusicOn ? (
+          <Volume2 className="w-5 h-5 text-pink-300" />
+        ) : (
+          <VolumeX className="w-5 h-5 text-gray-400" />
+        )}
+      </button>
+
+      {/* 4. Side Menu */}
       <div
         className={`fixed inset-y-0 right-0 w-64 bg-[#1a0b2e]/95 backdrop-blur-xl border-l border-white/10 z-50 transform transition-transform duration-300 ease-in-out ${
           isMenuOpen ? "translate-x-0" : "translate-x-full"
@@ -157,7 +161,7 @@ const CharacterInteractionScreen = () => {
         <div onClick={toggleMenu} className="fixed inset-0 bg-black/50 z-40" />
       )}
 
-      {/* 4. Character Model */}
+      {/* 5. Character Model */}
       <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
         <div className="absolute bottom-[25%] w-full flex justify-center">
           <img
@@ -168,9 +172,9 @@ const CharacterInteractionScreen = () => {
         </div>
       </div>
 
-      {/* 5. Bottom Controls */}
+      {/* 6. Bottom Controls */}
       <div className="absolute bottom-0 left-0 w-full flex flex-col items-center pb-8 px-6 z-30">
-        {/* Playback Widget (Shows when song is active) */}
+        {/* Playback Widget */}
         {currentSong && (
           <div className="mb-4 px-4 py-1.5 bg-black/60 backdrop-blur-md rounded-full border border-pink-500/30 flex items-center gap-3 animate-fade-in-up shadow-lg pointer-events-auto">
             <img
@@ -197,7 +201,7 @@ const CharacterInteractionScreen = () => {
 
         {/* Icons Row */}
         <div className="flex justify-between items-center w-full mb-6 px-4">
-          {/* LEFT: Music Button (Opens Songs) */}
+          {/* Music Button */}
           <button
             onClick={handleMusicClick}
             className="pointer-events-auto w-12 h-12 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white transition-transform active:scale-90 hover:bg-purple-800 shadow-lg"
@@ -205,7 +209,7 @@ const CharacterInteractionScreen = () => {
             <Music className="w-5 h-5" />
           </button>
 
-          {/* CENTER: Microphone Button */}
+          {/* Microphone Button */}
           <div className="relative flex items-center justify-center pointer-events-auto">
             {isListening && !currentSong && (
               <>
@@ -216,10 +220,10 @@ const CharacterInteractionScreen = () => {
 
             <button
               onClick={handleMicToggle}
-              disabled={!!currentSong} // Disable if song is playing
+              disabled={!!currentSong}
               className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_5px_rgba(168,85,247,0.4)] transition-all duration-300 active:scale-95 ${
                 currentSong
-                  ? "bg-gray-600 cursor-not-allowed opacity-80" // Visual state when disabled
+                  ? "bg-gray-600 cursor-not-allowed opacity-80"
                   : isListening
                   ? "bg-gradient-to-b from-pink-500 to-purple-600 scale-105 border-2 border-white/20"
                   : "bg-gradient-to-b from-purple-500 to-purple-800"
@@ -237,12 +241,11 @@ const CharacterInteractionScreen = () => {
             </button>
           </div>
 
-          {/* RIGHT: Dance Button (Was User) */}
+          {/* Dance Button */}
           <button
             onClick={handleDanceClick}
             className="pointer-events-auto w-12 h-12 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white transition-transform active:scale-90 hover:bg-purple-800 shadow-lg"
           >
-            {/* Sparkles icon represents Dance/Magic */}
             <Sparkles className="w-5 h-5 fill-current text-yellow-300" />
           </button>
         </div>
@@ -273,7 +276,7 @@ const CharacterInteractionScreen = () => {
         </div>
       </div>
 
-      {/* 6. Song Selection Popup */}
+      {/* 7. Song Selection Popup */}
       {showSongList && (
         <>
           <div
