@@ -163,13 +163,13 @@ const CharacterInteractionScreen = () => {
       )}
 
       {/* 5. Character Model */}
-     <div className="absolute inset-0 flex items-end justify-center z-10 pointer-events-none">
-  <div className="absolute bottom-0 w-full flex justify-center pointer-events-auto">
-    <div className="w-[280px] h-[420px] relative overflow-hidden">
-      <ShinchanModel animation="idle" />
-    </div>
-  </div>
-</div>
+      <div className="absolute inset-0 flex items-end justify-center z-10 pointer-events-none">
+        <div className="absolute bottom-0 w-full flex justify-center pointer-events-auto">
+          <div className="w-[280px] h-[420px] relative overflow-hidden">
+            <ShinchanModel animation="idle" />
+          </div>
+        </div>
+      </div>
 
 
 

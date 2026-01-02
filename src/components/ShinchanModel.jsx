@@ -38,7 +38,7 @@ fbx.scale.set(3, 3, 3);
 
   return (
     // ✅ FLOOR-LOCKED, CENTER-BOTTOM
-    <group position={[0, -1.8, 0]} rotation={[0, Math.PI, 0]}>
+    <group position={[0, -1.8, 0]} rotation={[0, 0, 0]}>
       <primitive object={fbx} />
     </group>
   );
