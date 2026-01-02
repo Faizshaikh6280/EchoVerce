@@ -1,4 +1,6 @@
 import React, { useState } from "react"; // Removed useEffect
+import ShinchanModel from "../components/ShinchanModel";
+
 import {
   ChevronLeft,
   Menu,
@@ -136,9 +138,8 @@ const CharacterInteractionScreen = () => {
 
       {/* 4. Side Menu */}
       <div
-        className={`fixed inset-y-0 right-0 w-64 bg-[#1a0b2e]/95 backdrop-blur-xl border-l border-white/10 z-50 transform transition-transform duration-300 ease-in-out ${
-          isMenuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed inset-y-0 right-0 w-64 bg-[#1a0b2e]/95 backdrop-blur-xl border-l border-white/10 z-50 transform transition-transform duration-300 ease-in-out ${isMenuOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="p-6">
           <div className="flex justify-between items-center mb-8">
@@ -162,15 +163,16 @@ const CharacterInteractionScreen = () => {
       )}
 
       {/* 5. Character Model */}
-      <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-        <div className="absolute bottom-[25%] w-full flex justify-center">
-          <img
-            src={characterImage}
-            alt="Shinchan 3D Model"
-            className="w-[55%] max-w-sm object-contain drop-shadow-2xl"
-          />
-        </div>
-      </div>
+     <div className="absolute inset-0 flex items-end justify-center z-10 pointer-events-none">
+  <div className="absolute bottom-0 w-full flex justify-center pointer-events-auto">
+    <div className="w-[280px] h-[420px] relative overflow-hidden">
+      <ShinchanModel animation="idle" />
+    </div>
+  </div>
+</div>
+
+
+
 
       {/* 6. Bottom Controls */}
       <div className="absolute bottom-0 left-0 w-full flex flex-col items-center pb-8 px-6 z-30">
@@ -221,21 +223,19 @@ const CharacterInteractionScreen = () => {
             <button
               onClick={handleMicToggle}
               disabled={!!currentSong}
-              className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_5px_rgba(168,85,247,0.4)] transition-all duration-300 active:scale-95 ${
-                currentSong
-                  ? "bg-gray-600 cursor-not-allowed opacity-80"
-                  : isListening
+              className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_5px_rgba(168,85,247,0.4)] transition-all duration-300 active:scale-95 ${currentSong
+                ? "bg-gray-600 cursor-not-allowed opacity-80"
+                : isListening
                   ? "bg-gradient-to-b from-pink-500 to-purple-600 scale-105 border-2 border-white/20"
                   : "bg-gradient-to-b from-purple-500 to-purple-800"
-              }`}
+                }`}
             >
               {currentSong ? (
                 <MicOff className="w-8 h-8 text-gray-400" />
               ) : (
                 <Mic
-                  className={`w-8 h-8 transition-transform ${
-                    isListening ? "animate-pulse" : ""
-                  }`}
+                  className={`w-8 h-8 transition-transform ${isListening ? "animate-pulse" : ""
+                    }`}
                 />
               )}
             </button>
@@ -253,23 +253,20 @@ const CharacterInteractionScreen = () => {
         {/* Toggle Mode Switcher */}
         <div className="flex w-full bg-purple-900/40 backdrop-blur-md rounded-full p-1 border border-white/10 relative pointer-events-auto">
           <div
-            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-gradient-to-r from-pink-500 to-purple-600 rounded-full transition-all duration-300 shadow-lg ${
-              activeMode === "Friend" ? "left-[calc(50%+2px)]" : "left-1"
-            }`}
+            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-gradient-to-r from-pink-500 to-purple-600 rounded-full transition-all duration-300 shadow-lg ${activeMode === "Friend" ? "left-[calc(50%+2px)]" : "left-1"
+              }`}
           ></div>
           <button
             onClick={() => handleModeSwitch("Mimic")}
-            className={`flex-1 relative z-10 py-3 text-sm font-medium transition-colors duration-300 ${
-              activeMode === "Mimic" ? "text-white" : "text-gray-300"
-            }`}
+            className={`flex-1 relative z-10 py-3 text-sm font-medium transition-colors duration-300 ${activeMode === "Mimic" ? "text-white" : "text-gray-300"
+              }`}
           >
             Mimic Mode
           </button>
           <button
             onClick={() => handleModeSwitch("Friend")}
-            className={`flex-1 relative z-10 py-3 text-sm font-medium transition-colors duration-300 ${
-              activeMode === "Friend" ? "text-white" : "text-gray-300"
-            }`}
+            className={`flex-1 relative z-10 py-3 text-sm font-medium transition-colors duration-300 ${activeMode === "Friend" ? "text-white" : "text-gray-300"
+              }`}
           >
             Friend Mode
           </button>
@@ -353,4 +350,4 @@ const CharacterInteractionScreen = () => {
   );
 };
 
-export default CharacterInteractionScreen;
+export default CharacterInteractionScreen;      
