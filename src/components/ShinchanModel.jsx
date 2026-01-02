@@ -22,7 +22,7 @@ function Shinchan() {
     });
 
     // ✅ FINAL SCALE (locked)
-fbx.scale.set(3, 3, 3);
+    fbx.scale.set(3, 3, 3);
 
     // ✅ Play embedded animation (if exists)
     if (fbx.animations.length > 0) {
@@ -46,16 +46,17 @@ fbx.scale.set(3, 3, 3);
 
 /* ================= CANVAS ================= */
 
-export default function ShinchanModel() {
+export default function ShinchanModel({ animation }) {
   return (
     <Canvas
-      orthographic                    // 🔥 TALKING TOM MODE
-      camera={{ zoom: 90, position: [0, 2, 10] }}
+      orthographic // 🔥 TALKING TOM MODE
+      camera={{ zoom: 100, position: [0, 2, 10] }}
       style={{
         width: "100%",
         height: "100%",
-        pointerEvents: "none",        // 👈 user can't rotate/zoom
+        pointerEvents: "none", // 👈 user can't rotate/zoom
       }}
+      animation={animation}
     >
       {/* Soft studio lighting */}
       <ambientLight intensity={1.2} />
