@@ -5,13 +5,20 @@ import { useEffect, useRef } from "react";
 
 /* ================= SHINCHAN ================= */
 
-function Shinchan() {
-  const fbx = useLoader(FBXLoader, "/models/shinchan/default.fbx");
+function Shinchan({ animation }) {
+  // 🔥 LOAD MODEL BASED ON BUTTON
+  const fbx = useLoader(
+    FBXLoader,
+    `/models/shinchan/${animation}.fbx`
+  );
 
   const mixer = useRef(null);
 
   useEffect(() => {
     if (!fbx) return;
+
+    // cleanup previous animation
+    mixer.current?.stopAllAction();
 
     fbx.traverse((obj) => {
       if (obj.isMesh) {
@@ -22,13 +29,13 @@ function Shinchan() {
     });
 
     // ✅ FINAL SCALE (locked)
-    fbx.scale.set(3, 3, 3);
+fbx.scale.set(3, 3, 3);
 
-    // ✅ Play embedded animation (if exists)
+    // play animation if exists
     if (fbx.animations.length > 0) {
       mixer.current = new THREE.AnimationMixer(fbx);
       const action = mixer.current.clipAction(fbx.animations[0]);
-      action.play();
+      action.reset().play();
     }
 
     return () => mixer.current?.stopAllAction();
@@ -37,8 +44,8 @@ function Shinchan() {
   useFrame((_, delta) => mixer.current?.update(delta));
 
   return (
-    // ✅ FLOOR-LOCKED, CENTER-BOTTOM
-    <group position={[0, -1.8, 0]} rotation={[0, 0, 0]}>
+    // ❌ REMOVE Math.PI (was flipping character)
+    <group position={[0, -1.8, 0]}>
       <primitive object={fbx} />
     </group>
   );
@@ -49,21 +56,19 @@ function Shinchan() {
 export default function ShinchanModel({ animation }) {
   return (
     <Canvas
-      orthographic // 🔥 TALKING TOM MODE
-      camera={{ zoom: 100, position: [0, 2, 10] }}
+      orthographic                    // 🔥 TALKING TOM MODE
+      camera={{ zoom: 90, position: [0, 2, 10] }}
       style={{
         width: "100%",
         height: "100%",
-        pointerEvents: "none", // 👈 user can't rotate/zoom
+        pointerEvents: "none",        // 👈 user can't rotate/zoom
       }}
-      animation={animation}
     >
-      {/* Soft studio lighting */}
       <ambientLight intensity={1.2} />
       <directionalLight position={[5, 10, 5]} intensity={1} />
 
-      {/* Character only */}
-      <Shinchan />
+      {/* 👇 KEY FIX */}
+      <Shinchan animation={animation} />
     </Canvas>
   );
 }
