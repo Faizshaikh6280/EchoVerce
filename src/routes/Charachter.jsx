@@ -53,7 +53,7 @@ const CharacterInteractionScreen = () => {
   const navigate = useNavigate();
 
   // State
-  
+
   const [animation, setAnimation] = useState("default");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeMode, setActiveMode] = useState("Mimic");
@@ -180,14 +180,15 @@ const CharacterInteractionScreen = () => {
       )}
 
       {/* 5. Character Model */}
+      {/* 5. Character Model */}
       <div className="absolute inset-0 flex items-end justify-center z-10 pointer-events-none">
         <div className="absolute bottom-0 w-full flex justify-center pointer-events-auto">
-          <div className="w-[300px] h-[480px] relative">
+          <div className="w-[90vw] max-w-[420px] h-[520px] relative overflow-visible bg-transparent">
             <ShinchanModel animation={animation} />
-
           </div>
         </div>
       </div>
+
 
       {/* 6. Bottom Controls */}
       <div className="absolute bottom-0 left-0 w-full flex flex-col items-center pb-8 px-6 z-30">
