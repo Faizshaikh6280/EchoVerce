@@ -32,7 +32,7 @@ function Shinchan({ animation }) {
       }
     });
 
-    fbx.scale.set(3, 3, 3);
+    fbx.scale.set(4, 4, 4);
 
     if (fbx.animations.length > 0) {
       mixer.current = new THREE.AnimationMixer(fbx);
@@ -46,7 +46,7 @@ function Shinchan({ animation }) {
   useFrame((_, delta) => mixer.current?.update(delta));
 
   return (
-    <group position={[0, -1.8, 0]}>
+    <group position={[0, -1.5, 0]}>
       <primitive object={fbx} />
     </group>
   );
@@ -58,7 +58,7 @@ export default function ShinchanModel({ animation }) {
   return (
     <Canvas
       orthographic
-      camera={{ zoom: 90, position: [0, 2, 10] }}
+      camera={{ zoom: 90, position: [0, 3, 10] }}
       style={{ width: "100%", height: "100%", pointerEvents: "none" }}
     >
       <ambientLight intensity={1.2} />

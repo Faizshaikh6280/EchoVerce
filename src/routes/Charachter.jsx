@@ -53,6 +53,7 @@ const CharacterInteractionScreen = () => {
   const navigate = useNavigate();
 
   // State
+  const [animation, setAnimation] = useState("default");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeMode, setActiveMode] = useState("Mimic");
   const [isListening, setIsListening] = useState(false);
@@ -77,27 +78,42 @@ const CharacterInteractionScreen = () => {
   };
 
   const handleMicToggle = () => {
-    if (currentSong) {
-      console.log("Mic disabled while music is playing");
-      return;
+    if (currentSong) return;
+
+    const next = !isListening;
+    setIsListening(next);
+
+    if (next) {
+      setAnimation("listen");     // mic ON
+    } else {
+      setAnimation("Talking");    // mic OFF
     }
-    setIsListening(!isListening);
   };
+
 
   const handleMusicClick = () => setShowSongList(true);
 
-  const handleDanceClick = () => console.log("Dance Logged!");
+  const handleDanceClick = () => {
+    setCurrentSong(null);
+    setIsListening(false);
+    setAnimation("dance");
+  };
 
   const handleModeSwitch = (mode) => setActiveMode(mode);
 
   const selectSong = (song) => {
     setCurrentSong(song);
-    // FIX: Turn off mic directly here instead of using useEffect
     setIsListening(false);
     setShowSongList(false);
+    setAnimation("dance"); // 🎵 dance animation
   };
 
-  const stopSong = () => setCurrentSong(null);
+
+  const stopSong = () => {
+    setCurrentSong(null);
+    setAnimation("default"); // back to idle/wave
+  };
+
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden font-sans bg-black">
@@ -165,14 +181,12 @@ const CharacterInteractionScreen = () => {
       {/* 5. Character Model */}
       <div className="absolute inset-0 flex items-end justify-center z-10 pointer-events-none">
         <div className="absolute bottom-0 w-full flex justify-center pointer-events-auto">
-          <div className="w-[280px] h-[420px] relative overflow-hidden">
-            <ShinchanModel animation="idle" />
+          <div className="w-[300px] h-[480px] relative">
+            <ShinchanModel animation={animation} />
+
           </div>
         </div>
       </div>
-
-
-
 
       {/* 6. Bottom Controls */}
       <div className="absolute bottom-0 left-0 w-full flex flex-col items-center pb-8 px-6 z-30">

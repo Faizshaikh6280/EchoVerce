@@ -2,27 +2,47 @@ import { useState } from "react";
 import ShinchanModel from "./ShinchanModel";
 
 export default function AnimationTest() {
-  const [animation, setAnimation] = useState("default");
+  const [animation, setAnimation] = useState("idle");
 
   return (
-    <div className="w-screen h-screen bg-black flex flex-col items-center justify-center">
-      <div className="w-[300px] h-[400px]">
+    <div className="w-screen h-screen bg-black flex items-center justify-center">
+      
+      {/* MODEL FRAME */}
+      <div className="relative w-[280px] h-[420px] overflow-hidden rounded-xl">
+        
+        {/* 3D MODEL */}
         <ShinchanModel animation={animation} />
-      </div>
 
-      <div className="flex gap-4 mt-6">
-        <button onClick={() => setAnimation("default")} className="px-4 py-2 bg-purple-600 text-white rounded">
-          Wave
-        </button>
-        <button onClick={() => setAnimation("dance")} className="px-4 py-2 bg-pink-600 text-white rounded">
-          Dance
-        </button>
-        <button onClick={() => setAnimation("Talking")} className="px-4 py-2 bg-blue-600 text-white rounded">
-          Talk
-        </button>
-        <button onClick={() => setAnimation("listen")} className="px-4 py-2 bg-green-600 text-white rounded">
-          Listen
-        </button>
+        {/* BUTTONS OVER MODEL */}
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2 z-20">
+          <button
+            onClick={() => setAnimation("idle")}
+            className="px-3 py-1 bg-purple-600 text-white text-sm rounded"
+          >
+            Idle
+          </button>
+
+          <button
+            onClick={() => setAnimation("dance")}
+            className="px-3 py-1 bg-pink-600 text-white text-sm rounded"
+          >
+            Dance
+          </button>
+
+          <button
+            onClick={() => setAnimation("Talking")}
+            className="px-3 py-1 bg-blue-600 text-white text-sm rounded"
+          >
+            Talk
+          </button>
+
+          <button
+            onClick={() => setAnimation("listen")}
+            className="px-3 py-1 bg-green-600 text-white text-sm rounded"
+          >
+            Listen
+          </button>
+        </div>
       </div>
     </div>
   );
