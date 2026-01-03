@@ -53,6 +53,7 @@ const CharacterInteractionScreen = () => {
   const navigate = useNavigate();
 
   // State
+  
   const [animation, setAnimation] = useState("default");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeMode, setActiveMode] = useState("Mimic");
