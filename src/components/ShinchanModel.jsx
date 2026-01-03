@@ -6,10 +6,15 @@ import { useEffect, useRef } from "react";
 /* ================= SHINCHAN ================= */
 
 function Shinchan({ animation }) {
-  // 🔥 LOAD MODEL BASED ON BUTTON
+  const VALID_ANIMATIONS = ["default", "dance", "Talking", "listen"];
+
+  const safeAnimation = VALID_ANIMATIONS.includes(animation)
+    ? animation
+    : "default";
+
   const fbx = useLoader(
     FBXLoader,
-    `/models/shinchan/${animation}.fbx`
+    `/models/shinchan/${safeAnimation}.fbx`
   );
 
   const mixer = useRef(null);
@@ -17,7 +22,6 @@ function Shinchan({ animation }) {
   useEffect(() => {
     if (!fbx) return;
 
-    // cleanup previous animation
     mixer.current?.stopAllAction();
 
     fbx.traverse((obj) => {
@@ -28,10 +32,8 @@ function Shinchan({ animation }) {
       }
     });
 
-    // ✅ FINAL SCALE (locked)
-fbx.scale.set(3, 3, 3);
+    fbx.scale.set(3, 3, 3);
 
-    // play animation if exists
     if (fbx.animations.length > 0) {
       mixer.current = new THREE.AnimationMixer(fbx);
       const action = mixer.current.clipAction(fbx.animations[0]);
@@ -44,7 +46,6 @@ fbx.scale.set(3, 3, 3);
   useFrame((_, delta) => mixer.current?.update(delta));
 
   return (
-    // ❌ REMOVE Math.PI (was flipping character)
     <group position={[0, -1.8, 0]}>
       <primitive object={fbx} />
     </group>
@@ -56,18 +57,13 @@ fbx.scale.set(3, 3, 3);
 export default function ShinchanModel({ animation }) {
   return (
     <Canvas
-      orthographic                    // 🔥 TALKING TOM MODE
+      orthographic
       camera={{ zoom: 90, position: [0, 2, 10] }}
-      style={{
-        width: "100%",
-        height: "100%",
-        pointerEvents: "none",        // 👈 user can't rotate/zoom
-      }}
+      style={{ width: "100%", height: "100%", pointerEvents: "none" }}
     >
       <ambientLight intensity={1.2} />
       <directionalLight position={[5, 10, 5]} intensity={1} />
 
-      {/* 👇 KEY FIX */}
       <Shinchan animation={animation} />
     </Canvas>
   );
