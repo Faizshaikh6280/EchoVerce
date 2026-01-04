@@ -15,13 +15,6 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 import { CHARACTER_CONFIG, TRENDING_SONGS } from "../config";
 
-import {
-  GROQ_API_KEY,
-  GROQ_API_URL,
-  MINIMAX_API_KEY,
-  MINIMAX_GROUP_ID,
-} from "../config";
-
 const CharacterInteractionScreen = () => {
   const navigate = useNavigate();
   const { slug } = useParams();
