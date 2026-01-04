@@ -1,5 +1,4 @@
 // --- CONFIGURATION ---
-// --- API KEYS ---
 
 export const CHARACTER_CONFIG = {
   shinchan: {
