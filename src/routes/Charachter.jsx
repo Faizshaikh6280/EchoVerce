@@ -13,85 +13,14 @@ import {
   Globe,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import { CHARACTER_CONFIG, TRENDING_SONGS } from "../config";
 
-// --- MOCK DATA FOR SONGS ---
-const TRENDING_SONGS = [
-  {
-    id: 1,
-    title: "Balle Balle",
-    duration: "3:45",
-    image: "https://picsum.photos/seed/dance1/100",
-  },
-  {
-    id: 2,
-    title: "Shinchan Theme",
-    duration: "1:20",
-    image: "https://picsum.photos/seed/anime/100",
-  },
-  {
-    id: 3,
-    title: "Party All Night",
-    duration: "4:10",
-    image: "https://picsum.photos/seed/party/100",
-  },
-  {
-    id: 4,
-    title: "Desi Beats",
-    duration: "2:55",
-    image: "https://picsum.photos/seed/beats/100",
-  },
-  {
-    id: 5,
-    title: "Lofi Vibes",
-    duration: "2:15",
-    image: "https://picsum.photos/seed/lofi/100",
-  },
-];
-
-// --- CONFIGURATION ---
-const CHARACTER_CONFIG = {
-  shinchan: {
-    id: "shinchan",
-    name: "Shinchan",
-    voiceId: "male-qn-qingse",
-    systemPrompt:
-      "You are Shinchan. 5 years old. Funny, naughty. Reply in Hinglish. Catchphrases: 'Arre yaar', 'Balle Balle'.",
-    image: "/images/shinchan.png",
-    bg: "/images/sinchanbg.png",
-  },
-  gandhiji: {
-    id: "gandhiji",
-    name: "Mahatma Gandhi",
-    voiceId: "male-qn-jingying",
-    systemPrompt:
-      "You are Mahatma Gandhi. Calm, wise, peaceful. Speak about Ahimsa and Truth. Reply in polite Hinglish or Hindi.",
-    image: "/images/gandhi.png",
-    bg: "/images/gandhibg.png",
-  },
-  honeysingh: {
-    id: "honeysingh",
-    name: "Honey Singh",
-    voiceId: "male-qn-dangdai",
-    systemPrompt:
-      "You are Yo Yo Honey Singh. Rapper, swag, energetic. Use Punjabi slang and Hinglish. Say 'Yo Yo!' often.",
-    image: "/images/honeysingh.png",
-    bg: "/images/concertbg.png",
-  },
-  kalam: {
-    id: "kalam",
-    name: "Dr. Kalam",
-    voiceId: "male-qn-shangwu",
-    systemPrompt:
-      "You are Dr. APJ Abdul Kalam. Inspirational, scientific, humble. Inspire the youth. Reply in Hinglish/English.",
-    image: "/images/kalam.png",
-    bg: "/images/spacebg.png",
-  },
-};
-
-// --- API KEYS ---
-const MINIMAX_API_KEY = "YOUR_MINIMAX_API_KEY";
-const MINIMAX_GROUP_ID = "YOUR_MINIMAX_GROUP_ID";
-const LLM_API_KEY = "YOUR_OPENAI_OR_GROQ_KEY";
+import {
+  GROQ_API_KEY,
+  GROQ_API_URL,
+  MINIMAX_API_KEY,
+  MINIMAX_GROUP_ID,
+} from "../config";
 
 const CharacterInteractionScreen = () => {
   const navigate = useNavigate();
@@ -100,12 +29,13 @@ const CharacterInteractionScreen = () => {
   const currentCharacter =
     CHARACTER_CONFIG[activeCharId] || CHARACTER_CONFIG["shinchan"];
 
-  // Refs
-  const audioRef = useRef(new Audio()); // For Voice (MiniMax)
-  const bgAudioRef = useRef(new Audio("/audio/background_music.mp3")); // For BG Music
+  const audioRef = useRef(new Audio());
+  const bgAudioRef = useRef(new Audio("/audio/background_music.mp3"));
   const recognitionRef = useRef(null);
+  // Refs for logic
+  const silenceTimer = useRef(null); // Tracks the 5s countdown
+  const transcriptAccumulator = useRef(""); // Stores the full text as you speak
 
-  // State
   const [animation, setAnimation] = useState("default");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeMode, setActiveMode] = useState("Mimic");
@@ -113,8 +43,9 @@ const CharacterInteractionScreen = () => {
   const [showSongList, setShowSongList] = useState(false);
   const [currentSong, setCurrentSong] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [language, setLanguage] = useState("en-IN");
   const [isBgMusicOn, setIsBgMusicOn] = useState(true);
+  // Stores the last few messages for context
+  const [chatHistory, setChatHistory] = useState([]);
 
   // --- 0. THREAD MANAGEMENT ---
   useEffect(() => {
@@ -124,7 +55,7 @@ const CharacterInteractionScreen = () => {
     setIsListening(false);
     setIsProcessing(false);
     console.log(`Switched to new thread for: ${currentCharacter.name}`);
-  }, [activeCharId]);
+  }, [activeCharId, currentCharacter.name]);
 
   // --- AUTO-PLAY BACKGROUND MUSIC ---
   useEffect(() => {
@@ -134,7 +65,7 @@ const CharacterInteractionScreen = () => {
 
     if (isBgMusicOn) {
       bgAudio.play().catch((error) => {
-        console.log("Autoplay prevented:", error);
+        console.warn("Autoplay prevented (Interact with page first):", error);
       });
     } else {
       bgAudio.pause();
@@ -146,117 +77,341 @@ const CharacterInteractionScreen = () => {
     };
   }, [isBgMusicOn]);
 
-  // --- 1. LLM LOGIC ---
+  // --- 1. INTELLIGENCE (Groq LLM) ---
   const fetchLLMResponse = async (userText) => {
+    console.log("hello");
+
     try {
-      const response = await fetch(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${LLM_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model: "gpt-4o-mini",
-            messages: [
-              { role: "system", content: currentCharacter.systemPrompt },
-              { role: "user", content: userText },
-            ],
-          }),
-        }
-      );
+      // A. Dynamic Language Rule
+
+      // B. Construct Messages
+      const systemMessage = {
+        role: "system",
+        content: `${currentCharacter.systemPrompt} Keep response under 2 sentences.`,
+      };
+
+      // OPTIMIZATION: Combine System + History + User
+      // Using chatHistory directly is fine for turn-based voice chats.
+      const payloadMessages = [
+        systemMessage,
+        ...chatHistory.slice(-6), // Keep context light
+        { role: "user", content: userText },
+      ];
+
+      console.log("📤 Sending to Groq:", payloadMessages);
+
+      // C. Call Groq API
+      const response = await fetch(GROQ_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          // USE THIS MODEL for better Hinglish & speed
+          model: "llama-3.1-8b-instant",
+          messages: payloadMessages,
+          // 0.6 - 0.7 is the sweet spot for characters (creative but not crazy)
+          temperature: 0.7,
+          // Strict limit to keep TTS fast (approx 2-3 sentences)
+          max_tokens: 80,
+        }),
+      });
+
+      if (!response.ok) throw new Error(`Groq Error: ${response.status}`);
+
       const data = await response.json();
-      return data.choices[0].message.content;
+      const botReply = data.choices[0].message.content || "Empty response";
+
+      console.log("📥 Groq Reply:", botReply);
+
+      // D. Update Memory (With Safety Cap)
+      setChatHistory((prev) => {
+        // OPTIMIZATION: Don't let the array grow forever. Keep only last 20 items in memory.
+        const newHistory = [
+          ...prev,
+          { role: "user", content: userText },
+          { role: "assistant", content: botReply },
+        ];
+        return newHistory.slice(-20);
+      });
+
+      return botReply;
     } catch (error) {
       console.error("LLM Error:", error);
-      return "Network error! Try again.";
+      // Return language-specific fallback
+
+      return "Oh no! My connection is bad.";
     }
   };
 
-  // --- 2. TTS LOGIC (MiniMax) ---
+  // --- 2. VOICE OUTPUT (Localhost Version) ---
   const speakWithMiniMax = async (text) => {
+    if (!text) return;
+    console.log("🔊 Generating Audio for:", text);
+
     try {
-      if (bgAudioRef.current) bgAudioRef.current.volume = 0.1; // Lower BG music
+      // 1. Lower background music volume
+      if (bgAudioRef.current) bgAudioRef.current.volume = 0.1;
 
-      const response = await fetch(
-        `https://api.minimax.chat/v1/t2a_v2?GroupId=${MINIMAX_GROUP_ID}`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${MINIMAX_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "speech-01-turbo",
-            text: text,
-            voice_setting: {
-              voice_id: currentCharacter.voiceId,
-              speed: 1.1,
-              vol: 1.0,
-              pitch: 1,
-            },
-            audio_setting: { sample_rate: 32000, format: "mp3", channel: 1 },
-          }),
-        }
+      // --- CHANGE IS HERE ---
+      // Use localhost for testing. Uncomment the Render URL when you deploy later.
+      const API_URL = "http://localhost:3000/api/speak";
+      // const API_URL = "https://echoverceserver.onrender.com/api/speak";
+
+      console.log("📡 Sending request to:", API_URL);
+
+      // 2. Fetch from your LOCAL Server
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: text,
+          voiceId: currentCharacter.voiceId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        // This will now show the exact error from your local server console!
+        throw new Error(`Server Error (${response.status}): ${errorText}`);
+      }
+
+      const data = await response.json();
+
+      // Check for internal MiniMax errors
+      if (data.base_resp && data.base_resp.status_code !== 0) {
+        throw new Error(data.base_resp.status_msg);
+      }
+
+      // 3. Decode Hex Audio
+      const audioHex = data.data.audio;
+      const audioBytes = new Uint8Array(
+        audioHex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
       );
+      const audioBlob = new Blob([audioBytes], { type: "audio/mp3" });
+      const audioUrl = URL.createObjectURL(audioBlob);
 
-      if (!response.ok) throw new Error("MiniMax API Failed");
+      // 4. Play Audio & Sync Animation
+      const audio = audioRef.current;
+      audio.pause();
+      audio.currentTime = 0;
+      audio.src = audioUrl;
 
-      const blob = await response.blob();
-      const audioUrl = URL.createObjectURL(blob);
-      audioRef.current.src = audioUrl;
-      audioRef.current.onplay = () => setAnimation("talking");
-      audioRef.current.onended = () => {
+      audio.onplay = () => {
+        console.log("▶️ Audio Playing -> Animation: talking");
+        setAnimation("Talking");
+      };
+
+      audio.onended = () => {
+        console.log("⏹️ Audio Ended -> Animation: default");
         setAnimation("default");
         if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
       };
-      audioRef.current.play();
+
+      audio.onerror = (e) => {
+        console.error("Audio Playback Failed", e);
+        setAnimation("default");
+        if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
+      };
+
+      await audio.play();
     } catch (error) {
-      console.error("TTS Error:", error);
+      console.error("❌ TTS Error:", error);
       setAnimation("default");
       if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
+
+      // Alert the user so you see the error clearly on screen
+      alert(`TTS Failed: ${error.message}`);
     }
   };
 
-  // --- 3. SPEECH RECOGNITION ---
+  // // --- 2. VOICE OUTPUT (Fixed: Now uses your Render Proxy) ---
+  // const speakWithMiniMax = async (text) => {
+  //   if (!text) return;
+  //   console.log("🔊 Generating Audio for:", text);
+
+  //   try {
+  //     // 1. Lower background music volume
+  //     if (bgAudioRef.current) bgAudioRef.current.volume = 0.1;
+
+  //     // 2. Fetch from YOUR Render Server (The Middleman)
+  //     // We no longer send the API Key here. We only send what the server needs: text & voiceId.
+  //     const response = await fetch(
+  //       "https://echoverceserver.onrender.com/api/speak",
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify({
+  //           text: text,
+  //           voiceId: currentCharacter.voiceId, // Send only the ID, the server handles the rest
+  //         }),
+  //       }
+  //     );
+
+  //     if (!response.ok) {
+  //       // Try to get the error message from the server, or default to status text
+  //       const errorText = await response.text();
+  //       throw new Error(`Server Error (${response.status}): ${errorText}`);
+  //     }
+
+  //     const data = await response.json();
+
+  //     // Check for internal MiniMax errors passed through your proxy
+  //     if (data.base_resp && data.base_resp.status_code !== 0) {
+  //       throw new Error(data.base_resp.status_msg);
+  //     }
+
+  //     // 3. Decode Hex Audio (Same as before)
+  //     const audioHex = data.data.audio;
+  //     const audioBytes = new Uint8Array(
+  //       audioHex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
+  //     );
+  //     const audioBlob = new Blob([audioBytes], { type: "audio/mp3" });
+  //     const audioUrl = URL.createObjectURL(audioBlob);
+
+  //     // 4. Play Audio & Sync Animation (Same as before)
+  //     const audio = audioRef.current;
+
+  //     audio.pause();
+  //     audio.currentTime = 0;
+  //     audio.src = audioUrl;
+
+  //     // --- ANIMATION EVENTS ---
+
+  //     audio.onplay = () => {
+  //       console.log("▶️ Audio Playing -> Animation: talking");
+  //       setAnimation("Talking");
+  //     };
+
+  //     audio.onended = () => {
+  //       console.log("⏹️ Audio Ended -> Animation: default");
+  //       setAnimation("default");
+  //       if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
+  //     };
+
+  //     audio.onerror = (e) => {
+  //       console.error("Audio Playback Failed", e);
+  //       setAnimation("default");
+  //       if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
+  //     };
+
+  //     await audio.play();
+  //   } catch (error) {
+  //     console.error("❌ TTS Error:", error);
+  //     setAnimation("default");
+  //     // Restore BG Music on error
+  //     if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
+  //   }
+  // };
+
+  // --- 3. SPEECH RECOGNITION (Multi-Sentence + Auto-Stop) ---
   const startListening = () => {
+    // 1. Browser Support Check
     if (!("webkitSpeechRecognition" in window)) {
       alert("Please use Google Chrome.");
       return;
     }
-    const recognition = new window.webkitSpeechRecognition();
-    recognition.continuous = false;
-    recognition.lang = language;
-    recognition.interimResults = false;
 
-    recognition.onstart = () => {
-      setIsListening(true);
-      setAnimation("listen");
+    // 2. Cleanup previous instances
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
+    }
+    if (silenceTimer.current) clearTimeout(silenceTimer.current);
+
+    // 3. Reset Transcript
+    transcriptAccumulator.current = "";
+
+    // 4. Configure Recognition
+    const recognition = new window.webkitSpeechRecognition();
+    recognition.continuous = true; // Allow multiple sentences
+    recognition.interimResults = true; // Get results while speaking (to reset timer)
+    recognition.lang = "en-IN"; // Use Indian English for better Hinglish support
+    // --- HELPER: RESET SILENCE TIMER ---
+    const resetSilenceTimer = () => {
+      // Clear existing timer
+      if (silenceTimer.current) clearTimeout(silenceTimer.current);
+
+      // Set new 2-second timer
+      silenceTimer.current = setTimeout(() => {
+        console.log("🛑 Silence detected (2s). Stopping mic automatically...");
+        recognition.stop();
+      }, 3000); // 2000ms = 2 seconds
     };
 
-    recognition.onresult = async (event) => {
-      const transcript = event.results[0][0].transcript;
-      setIsListening(false);
+    // --- EVENT HANDLERS ---
 
-      if (activeMode === "Friend") {
-        setIsProcessing(true);
-        // setAnimation("thinking");
-        const reply = await fetchLLMResponse(transcript);
-        setIsProcessing(false);
-        await speakWithMiniMax(reply);
-      } else {
-        setIsProcessing(false);
-        await speakWithMiniMax(transcript);
+    recognition.onstart = () => {
+      console.log("🎤 Mic ON. Speak multiple sentences...");
+      setIsListening(true);
+      setAnimation("listen");
+      resetSilenceTimer(); // Start the first countdown
+    };
+
+    recognition.onresult = (event) => {
+      resetSilenceTimer(); // User spoke! Reset the 5s kill-switch
+
+      // Iterate through results to handle final vs interim text
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          // If this sentence is finished, add it to our accumulator
+          const sentence = event.results[i][0].transcript;
+          transcriptAccumulator.current += sentence + " ";
+          console.log("📝 Sentence captured:", sentence);
+        }
       }
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = (event) => {
+      console.error("❌ Mic Error:", event.error);
+
+      // Ignore 'no-speech' if we already have some text recorded
+      if (event.error === "no-speech") {
+        if (transcriptAccumulator.current.trim().length > 0) {
+          // We have text, so this just means the user stopped talking.
+          // Treat it as a normal stop.
+          recognition.stop();
+          return;
+        }
+      }
+
+      // Real error handling
       setIsListening(false);
       setAnimation("default");
+      if (silenceTimer.current) clearTimeout(silenceTimer.current);
     };
-    recognition.onend = () => {
+
+    recognition.onend = async () => {
+      console.log("🛑 Mic OFF. Processing final result...");
       setIsListening(false);
+      if (silenceTimer.current) clearTimeout(silenceTimer.current);
+
+      // Get the final full text
+      const finalFullText = transcriptAccumulator.current.trim();
+      console.log("✅ FULL TRANSCRIPT:", finalFullText);
+
+      // Only proceed if we actually caught some words
+      if (finalFullText.length > 0) {
+        if (activeMode === "Friend") {
+          setIsProcessing(true);
+          // setAnimation("thinking");
+          const reply = await fetchLLMResponse(finalFullText);
+          console.log(reply);
+          setIsProcessing(false);
+          await speakWithMiniMax(reply);
+        } else {
+          // Mimic Mode
+          setIsProcessing(false);
+          await speakWithMiniMax(finalFullText);
+        }
+      } else {
+        // No text captured
+        setAnimation("default");
+      }
     };
 
     recognitionRef.current = recognition;
@@ -264,12 +419,13 @@ const CharacterInteractionScreen = () => {
   };
 
   const stopListening = () => {
-    if (recognitionRef.current) recognitionRef.current.stop();
+    if (recognitionRef.current) {
+      recognitionRef.current.stop(); // Triggers onend automatically
+    }
+    if (silenceTimer.current) {
+      clearTimeout(silenceTimer.current);
+    }
   };
-
-  // --- HANDLERS ---
-  const toggleLanguage = () =>
-    setLanguage(language === "en-IN" ? "en-US" : "en-IN");
 
   const handleMicToggle = () => {
     if (currentSong) return;
@@ -293,7 +449,7 @@ const CharacterInteractionScreen = () => {
     if (recognitionRef.current) recognitionRef.current.stop();
     setShowSongList(false);
     if (animation !== "dance") setAnimation("default");
-    if (bgAudioRef.current) bgAudioRef.current.pause(); // Stop BG music when song plays
+    if (bgAudioRef.current) bgAudioRef.current.pause();
   };
 
   const stopSong = () => {
@@ -329,16 +485,6 @@ const CharacterInteractionScreen = () => {
           className="pointer-events-auto w-10 h-10 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white active:scale-95 transition-all hover:bg-purple-800 shadow-lg"
         >
           <ChevronLeft className="w-5 h-5" />
-        </button>
-
-        <button
-          onClick={toggleLanguage}
-          className="pointer-events-auto flex items-center gap-2 px-4 py-2 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 text-white active:scale-95 transition-all hover:bg-purple-800 shadow-lg"
-        >
-          <Globe className="w-4 h-4 text-pink-300" />
-          <span className="text-xs font-bold uppercase tracking-wide">
-            {language === "en-IN" ? "Hinglish" : "English"}
-          </span>
         </button>
 
         <button
