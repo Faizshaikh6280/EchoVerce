@@ -140,85 +140,86 @@ const CharacterInteractionScreen = () => {
 
   // --- 2. VOICE OUTPUT (Localhost Version) ---
   const speakWithMiniMax = async (text) => {
-    if (!text) return;
-    console.log("🔊 Generating Audio for:", text);
+    setAnimation("Talking");
+    // if (!text) return;
+    // console.log("🔊 Generating Audio for:", text);
 
-    try {
-      // 1. Lower background music volume
-      if (bgAudioRef.current) bgAudioRef.current.volume = 0.1;
+    // try {
+    //   // 1. Lower background music volume
+    //   if (bgAudioRef.current) bgAudioRef.current.volume = 0.1;
 
-      // --- CHANGE IS HERE ---
-      // Use localhost for testing. Uncomment the Render URL when you deploy later.
-      const API_URL = "http://localhost:3000/api/speak";
-      // const API_URL = "https://echoverceserver.onrender.com/api/speak";
+    //   // --- CHANGE IS HERE ---
+    //   // Use localhost for testing. Uncomment the Render URL when you deploy later.
+    //   const API_URL = "http://localhost:3000/api/speak";
+    //   // const API_URL = "https://echoverceserver.onrender.com/api/speak";
 
-      console.log("📡 Sending request to:", API_URL);
+    //   console.log("📡 Sending request to:", API_URL);
 
-      // 2. Fetch from your LOCAL Server
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: text,
-          voiceId: currentCharacter.voiceId,
-        }),
-      });
+    //   // 2. Fetch from your LOCAL Server
+    //   const response = await fetch(API_URL, {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify({
+    //       text: text,
+    //       voiceId: currentCharacter.voiceId,
+    //     }),
+    //   });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        // This will now show the exact error from your local server console!
-        throw new Error(`Server Error (${response.status}): ${errorText}`);
-      }
+    //   if (!response.ok) {
+    //     const errorText = await response.text();
+    //     // This will now show the exact error from your local server console!
+    //     throw new Error(`Server Error (${response.status}): ${errorText}`);
+    //   }
 
-      const data = await response.json();
+    //   const data = await response.json();
 
-      // Check for internal MiniMax errors
-      if (data.base_resp && data.base_resp.status_code !== 0) {
-        throw new Error(data.base_resp.status_msg);
-      }
+    //   // Check for internal MiniMax errors
+    //   if (data.base_resp && data.base_resp.status_code !== 0) {
+    //     throw new Error(data.base_resp.status_msg);
+    //   }
 
-      // 3. Decode Hex Audio
-      const audioHex = data.data.audio;
-      const audioBytes = new Uint8Array(
-        audioHex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
-      );
-      const audioBlob = new Blob([audioBytes], { type: "audio/mp3" });
-      const audioUrl = URL.createObjectURL(audioBlob);
+    //   // 3. Decode Hex Audio
+    //   const audioHex = data.data.audio;
+    //   const audioBytes = new Uint8Array(
+    //     audioHex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
+    //   );
+    //   const audioBlob = new Blob([audioBytes], { type: "audio/mp3" });
+    //   const audioUrl = URL.createObjectURL(audioBlob);
 
-      // 4. Play Audio & Sync Animation
-      const audio = audioRef.current;
-      audio.pause();
-      audio.currentTime = 0;
-      audio.src = audioUrl;
+    //   // 4. Play Audio & Sync Animation
+    //   const audio = audioRef.current;
+    //   audio.pause();
+    //   audio.currentTime = 0;
+    //   audio.src = audioUrl;
 
-      audio.onplay = () => {
-        console.log("▶️ Audio Playing -> Animation: talking");
-        setAnimation("Talking");
-      };
+    //   audio.onplay = () => {
+    //     console.log("▶️ Audio Playing -> Animation: talking");
+    //     setAnimation("Talking");
+    //   };
 
-      audio.onended = () => {
-        console.log("⏹️ Audio Ended -> Animation: default");
-        setAnimation("default");
-        if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
-      };
+    //   audio.onended = () => {
+    //     console.log("⏹️ Audio Ended -> Animation: default");
+    //     setAnimation("default");
+    //     if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
+    //   };
 
-      audio.onerror = (e) => {
-        console.error("Audio Playback Failed", e);
-        setAnimation("default");
-        if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
-      };
+    //   audio.onerror = (e) => {
+    //     console.error("Audio Playback Failed", e);
+    //     setAnimation("default");
+    //     if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
+    //   };
 
-      await audio.play();
-    } catch (error) {
-      console.error("❌ TTS Error:", error);
-      setAnimation("default");
-      if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
+    //   await audio.play();
+    // } catch (error) {
+    //   console.error("❌ TTS Error:", error);
+    //   setAnimation("default");
+    //   if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
 
-      // Alert the user so you see the error clearly on screen
-      alert(`TTS Failed: ${error.message}`);
-    }
+    //   // Alert the user so you see the error clearly on screen
+    //   alert(`TTS Failed: ${error.message}`);
+    // }
   };
 
   // // --- 2. VOICE OUTPUT (Fixed: Now uses your Render Proxy) ---
