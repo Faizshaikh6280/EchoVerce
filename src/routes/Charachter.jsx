@@ -101,11 +101,11 @@ const CharacterInteractionScreen = () => {
       console.log("📤 Sending to Groq:", payloadMessages);
 
       // C. Call Groq API
-      const response = await fetch(GROQ_API_URL, {
+      const response = await fetch(import.meta.env.VITE_GROQ_API_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${GROQ_API_KEY}`,
+          Authorization: `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
         },
         body: JSON.stringify({
           // USE THIS MODEL for better Hinglish & speed

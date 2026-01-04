@@ -1,12 +1,5 @@
 // --- CONFIGURATION ---
 // --- API KEYS ---
-export const GROQ_API_KEY =
-  "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"; // REPLACE THIS
-export const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
-
-export const MINIMAX_API_KEY =
-  "sk-api-QpQH9eXWrJw8xqEa2kI4tsEct0dryrxvG_kTKd1eN4wpaF5Og5bh-2PUQK9E3QJtDTmwbg5wfpGQrkyyRXMI6NWm7DQiewHTfCZPwOiWZmOT3xkxZGkGAdY"; // REPLACE THIS
-export const MINIMAX_GROUP_ID = "2005140095052550464"; // REPLACE THIS
 
 export const CHARACTER_CONFIG = {
   shinchan: {
