@@ -9,7 +9,7 @@ const INITIAL_DATA = [
     name: "SHINCHAN",
     category: "Funny",
     isPaid: true,
-    image: "/images/shinchan.png",
+    image: "/images/Shinchan.png",
     slug: "shinchan",
   },
   {
@@ -17,7 +17,7 @@ const INITIAL_DATA = [
     name: "MOTU",
     category: "Funny",
     isPaid: false,
-    image: "/images/shinchan.png",
+    image: "/images/Shinchan.png",
     slug: "motu",
   },
   {
@@ -25,7 +25,7 @@ const INITIAL_DATA = [
     name: "GANDHI JI",
     category: "Calm",
     isPaid: true,
-    image: "/images/shinchan.png",
+    image: "/images/Shinchan.png",
     slug: "ghandhiji",
   },
   {
@@ -33,7 +33,7 @@ const INITIAL_DATA = [
     name: "BUDDHA JI",
     category: "Calm",
     isPaid: false,
-    image: "/images/shinchan.png",
+    image: "/images/Shinchan.png",
     slug: "buddhaji",
   },
   {
@@ -41,7 +41,7 @@ const INITIAL_DATA = [
     name: "HONEY SINGH",
     category: "Energetic",
     isPaid: true,
-    image: "/images/shinchan.png",
+    image: "/images/Shinchan.png",
     slug: "honeysingh",
   },
   {
@@ -49,7 +49,7 @@ const INITIAL_DATA = [
     name: "DORAEMON",
     category: "Energetic",
     isPaid: false,
-    image: "/images/shinchan.png",
+    image: "/images/Shinchan.png",
     slug: "doraemon",
   },
   {
@@ -57,7 +57,7 @@ const INITIAL_DATA = [
     name: "OGGY",
     category: "Emotional",
     isPaid: true,
-    image: "/images/shinchan.png",
+    image: "/images/Shinchan.png",
     slug: "oggy",
   },
   {
@@ -65,7 +65,7 @@ const INITIAL_DATA = [
     name: "ARIJIT SINGH",
     category: "Emotional",
     isPaid: false,
-    image: "/images/shinchan.png",
+    image: "/images/Shinchan.png",
     slug: "arijitsingh",
   },
 ];
