@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import ShinchanModel from "../components/ShinchanModel";
+import { Toaster } from "react-hot-toast"; // ADD THIS
+import { showErrorToast } from "../utils/toast"; // ADD THIS
+
 import {
   ChevronLeft,
   Menu,
@@ -10,7 +13,6 @@ import {
   Play,
   Volume2,
   VolumeX,
-  Globe,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CHARACTER_CONFIG, TRENDING_SONGS } from "../config";
@@ -23,7 +25,12 @@ const CharacterInteractionScreen = () => {
     CHARACTER_CONFIG[activeCharId] || CHARACTER_CONFIG["shinchan"];
 
   const audioRef = useRef(new Audio());
-  const bgAudioRef = useRef(new Audio("/audio/background_music.mp3"));
+
+  // --- UPDATED: Initialize with character specific music or fallback ---
+  const bgAudioRef = useRef(
+    new Audio(currentCharacter.music || "/audio/background_music.mp3")
+  );
+
   const recognitionRef = useRef(null);
   // Refs for logic
   const silenceTimer = useRef(null); // Tracks the 5s countdown
@@ -40,7 +47,7 @@ const CharacterInteractionScreen = () => {
   // Stores the last few messages for context
   const [chatHistory, setChatHistory] = useState([]);
 
-  // --- 0. THREAD MANAGEMENT ---
+  // --- 0. THREAD & MUSIC MANAGEMENT ---
   useEffect(() => {
     stopListening();
     stopSong();
@@ -48,15 +55,36 @@ const CharacterInteractionScreen = () => {
     setIsListening(false);
     setIsProcessing(false);
     console.log(`Switched to new thread for: ${currentCharacter.name}`);
-  }, [activeCharId, currentCharacter.name]);
+
+    // --- NEW: Update Background Music Source Dynamically ---
+    if (bgAudioRef.current) {
+      // Pause old track
+      bgAudioRef.current.pause();
+      // Switch to new character's music
+      bgAudioRef.current.src =
+        currentCharacter.music || "/audio/background_music.mp3";
+      // Reset volume to moderate level
+      bgAudioRef.current.volume = 0.2;
+      bgAudioRef.current.loop = true;
+
+      // Play only if music is toggled ON
+      if (isBgMusicOn) {
+        bgAudioRef.current.play().catch((error) => {
+          console.warn("Autoplay prevented on switch:", error);
+        });
+      }
+    }
+  }, [activeCharId, currentCharacter.name, currentCharacter.music]);
 
   // --- AUTO-PLAY BACKGROUND MUSIC ---
   useEffect(() => {
     const bgAudio = bgAudioRef.current;
     bgAudio.loop = true;
-    bgAudio.volume = 0.2;
+    // bgAudio.volume = 0.2; // Removed this line to let other functions control volume dynamically
 
     if (isBgMusicOn) {
+      // Ensure volume is moderate when starting
+      bgAudio.volume = 0.2;
       bgAudio.play().catch((error) => {
         console.warn("Autoplay prevented (Interact with page first):", error);
       });
@@ -70,57 +98,36 @@ const CharacterInteractionScreen = () => {
     };
   }, [isBgMusicOn]);
 
-  // --- 1. INTELLIGENCE (Groq LLM) ---
+  // --- UPDATED: 1. INTELLIGENCE (Gemini LLM via Backend) ---
   const fetchLLMResponse = async (userText) => {
-    console.log("hello");
-
     try {
-      // A. Dynamic Language Rule
+      console.log(`📤 Sending to Gemini (${currentCharacter.name}):`, userText);
 
-      // B. Construct Messages
-      const systemMessage = {
-        role: "system",
-        content: `${currentCharacter.systemPrompt} Keep response under 2 sentences.`,
-      };
-
-      // OPTIMIZATION: Combine System + History + User
-      // Using chatHistory directly is fine for turn-based voice chats.
-      const payloadMessages = [
-        systemMessage,
-        ...chatHistory.slice(-6), // Keep context light
-        { role: "user", content: userText },
-      ];
-
-      console.log("📤 Sending to Groq:", payloadMessages);
-
-      // C. Call Groq API
-      const response = await fetch(import.meta.env.VITE_GROQ_API_URL, {
+      // Call backend instead of calling Gemini directly
+      const response = await fetch("http://localhost:3000/api/llm", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-          // USE THIS MODEL for better Hinglish & speed
-          model: "llama-3.1-8b-instant",
-          messages: payloadMessages,
-          // 0.6 - 0.7 is the sweet spot for characters (creative but not crazy)
-          temperature: 0.7,
-          // Strict limit to keep TTS fast (approx 2-3 sentences)
-          max_tokens: 80,
+          characterName: currentCharacter.name,
+          systemPrompt: currentCharacter.systemPrompt,
+          history: chatHistory,
+          userText: userText,
         }),
       });
 
-      if (!response.ok) throw new Error(`Groq Error: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`Backend LLM Error: ${response.status}`);
+      }
 
       const data = await response.json();
-      const botReply = data.choices[0].message.content || "Empty response";
+      const botReply = data.reply || "Empty response";
 
-      console.log("📥 Groq Reply:", botReply);
+      console.log("📥 Gemini Reply:", botReply);
 
-      // D. Update Memory (With Safety Cap)
+      // F. Update chat history
       setChatHistory((prev) => {
-        // OPTIMIZATION: Don't let the array grow forever. Keep only last 20 items in memory.
         const newHistory = [
           ...prev,
           { role: "user", content: userText },
@@ -131,183 +138,107 @@ const CharacterInteractionScreen = () => {
 
       return botReply;
     } catch (error) {
-      console.error("LLM Error:", error);
-      // Return language-specific fallback
-
-      return "Oh no! My connection is bad.";
+      console.error("❌ Gemini API Error:", error);
+      // ADD TOAST INSTEAD OF JUST RETURNING
+      showErrorToast("Oops! Brain connection lost. Try again?");
+      return "अरे! लगता है मेरा दिमाग थोड़ा घूम गया है। फिर से बोलना?";
     }
   };
 
-  // --- 2. VOICE OUTPUT (Localhost Version) ---
+  // --- 2. VOICE OUTPUT (Integrated with Node.js Backend) ---
   const speakWithMiniMax = async (text) => {
-    setAnimation("Talking");
-    // if (!text) return;
-    // console.log("🔊 Generating Audio for:", text);
+    if (!text) return;
 
-    // try {
-    //   // 1. Lower background music volume
-    //   if (bgAudioRef.current) bgAudioRef.current.volume = 0.1;
+    // --- STOP PREVIOUS AUDIO & RESET ANIMATION ---
+    const audio = audioRef.current;
+    if (!audio.paused) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    setAnimation("default");
 
-    //   // --- CHANGE IS HERE ---
-    //   // Use localhost for testing. Uncomment the Render URL when you deploy later.
-    //   const API_URL = "http://localhost:3000/api/speak";
-    //   // const API_URL = "https://echoverceserver.onrender.com/api/speak";
+    console.log("🔊 Requesting Audio for:", text);
+    // setAnimation("thinking"); // Optional: visual feedback while loading
 
-    //   console.log("📡 Sending request to:", API_URL);
+    try {
+      // Point to your local Node.js server
+      const response = await fetch("http://localhost:3000/api/speak", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: text,
+          voiceId: currentCharacter.voiceId, // e.g. "male-qn-qingse"
+        }),
+      });
 
-    //   // 2. Fetch from your LOCAL Server
-    //   const response = await fetch(API_URL, {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify({
-    //       text: text,
-    //       voiceId: currentCharacter.voiceId,
-    //     }),
-    //   });
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Server connection failed");
+      }
 
-    //   if (!response.ok) {
-    //     const errorText = await response.text();
-    //     // This will now show the exact error from your local server console!
-    //     throw new Error(`Server Error (${response.status}): ${errorText}`);
-    //   }
+      const data = await response.json();
 
-    //   const data = await response.json();
+      // --- DECODE AUDIO (MiniMax sends Hex strings) ---
+      const audioHex = data.data.audio;
+      if (!audioHex) throw new Error("No audio data received");
 
-    //   // Check for internal MiniMax errors
-    //   if (data.base_resp && data.base_resp.status_code !== 0) {
-    //     throw new Error(data.base_resp.status_msg);
-    //   }
+      const audioBytes = new Uint8Array(
+        audioHex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
+      );
+      const audioBlob = new Blob([audioBytes], { type: "audio/mp3" });
+      const audioUrl = URL.createObjectURL(audioBlob);
 
-    //   // 3. Decode Hex Audio
-    //   const audioHex = data.data.audio;
-    //   const audioBytes = new Uint8Array(
-    //     audioHex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
-    //   );
-    //   const audioBlob = new Blob([audioBytes], { type: "audio/mp3" });
-    //   const audioUrl = URL.createObjectURL(audioBlob);
+      // --- PLAYBACK & ANIMATION SYNC ---
+      audio.src = audioUrl;
 
-    //   // 4. Play Audio & Sync Animation
-    //   const audio = audioRef.current;
-    //   audio.pause();
-    //   audio.currentTime = 0;
-    //   audio.src = audioUrl;
+      audio.onplay = () => {
+        console.log("▶️ Speaking...");
+        setAnimation("Talking"); // <--- FORCE ANIMATION ON
 
-    //   audio.onplay = () => {
-    //     console.log("▶️ Audio Playing -> Animation: talking");
-    //     setAnimation("Talking");
-    //   };
+        // --- NEW: Audio Ducking (Lower BG Music volume) ---
+        if (bgAudioRef.current && isBgMusicOn) {
+          bgAudioRef.current.volume = 0.05; // Drop to 5% volume so voice is clear
+        }
+      };
 
-    //   audio.onended = () => {
-    //     console.log("⏹️ Audio Ended -> Animation: default");
-    //     setAnimation("default");
-    //     if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
-    //   };
+      audio.onended = () => {
+        console.log("⏹️ Finished.");
+        setAnimation("default"); // <--- FORCE ANIMATION OFF
 
-    //   audio.onerror = (e) => {
-    //     console.error("Audio Playback Failed", e);
-    //     setAnimation("default");
-    //     if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
-    //   };
+        // --- NEW: Restore BG Music Volume ---
+        if (bgAudioRef.current && isBgMusicOn) {
+          bgAudioRef.current.volume = 0.2; // Restore to 20% volume
+        }
+      };
 
-    //   await audio.play();
-    // } catch (error) {
-    //   console.error("❌ TTS Error:", error);
-    //   setAnimation("default");
-    //   if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
+      audio.onerror = (e) => {
+        console.error("Audio Playback Error", e);
+        setAnimation("default");
+        // Restore volume if error occurs
+        if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
+        // ADD TOAST FOR AUDIO PLAYBACK ERROR
+        showErrorToast("Audio playback failed. Please try again.");
+      };
 
-    //   // Alert the user so you see the error clearly on screen
-    //   alert(`TTS Failed: ${error.message}`);
-    // }
+      await audio.play();
+    } catch (error) {
+      console.error("❌ TTS Failed:", error.message);
+      setAnimation("default");
+      // REPLACE ALERT WITH TOAST
+      showErrorToast(`Voice generation failed: ${error.message}`);
+
+      if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
+    }
   };
-
-  // // --- 2. VOICE OUTPUT (Fixed: Now uses your Render Proxy) ---
-  // const speakWithMiniMax = async (text) => {
-  //   if (!text) return;
-  //   console.log("🔊 Generating Audio for:", text);
-
-  //   try {
-  //     // 1. Lower background music volume
-  //     if (bgAudioRef.current) bgAudioRef.current.volume = 0.1;
-
-  //     // 2. Fetch from YOUR Render Server (The Middleman)
-  //     // We no longer send the API Key here. We only send what the server needs: text & voiceId.
-  //     const response = await fetch(
-  //       "https://echoverceserver.onrender.com/api/speak",
-  //       {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //         body: JSON.stringify({
-  //           text: text,
-  //           voiceId: currentCharacter.voiceId, // Send only the ID, the server handles the rest
-  //         }),
-  //       }
-  //     );
-
-  //     if (!response.ok) {
-  //       // Try to get the error message from the server, or default to status text
-  //       const errorText = await response.text();
-  //       throw new Error(`Server Error (${response.status}): ${errorText}`);
-  //     }
-
-  //     const data = await response.json();
-
-  //     // Check for internal MiniMax errors passed through your proxy
-  //     if (data.base_resp && data.base_resp.status_code !== 0) {
-  //       throw new Error(data.base_resp.status_msg);
-  //     }
-
-  //     // 3. Decode Hex Audio (Same as before)
-  //     const audioHex = data.data.audio;
-  //     const audioBytes = new Uint8Array(
-  //       audioHex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
-  //     );
-  //     const audioBlob = new Blob([audioBytes], { type: "audio/mp3" });
-  //     const audioUrl = URL.createObjectURL(audioBlob);
-
-  //     // 4. Play Audio & Sync Animation (Same as before)
-  //     const audio = audioRef.current;
-
-  //     audio.pause();
-  //     audio.currentTime = 0;
-  //     audio.src = audioUrl;
-
-  //     // --- ANIMATION EVENTS ---
-
-  //     audio.onplay = () => {
-  //       console.log("▶️ Audio Playing -> Animation: talking");
-  //       setAnimation("Talking");
-  //     };
-
-  //     audio.onended = () => {
-  //       console.log("⏹️ Audio Ended -> Animation: default");
-  //       setAnimation("default");
-  //       if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
-  //     };
-
-  //     audio.onerror = (e) => {
-  //       console.error("Audio Playback Failed", e);
-  //       setAnimation("default");
-  //       if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
-  //     };
-
-  //     await audio.play();
-  //   } catch (error) {
-  //     console.error("❌ TTS Error:", error);
-  //     setAnimation("default");
-  //     // Restore BG Music on error
-  //     if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
-  //   }
-  // };
 
   // --- 3. SPEECH RECOGNITION (Multi-Sentence + Auto-Stop) ---
   const startListening = () => {
     // 1. Browser Support Check
     if (!("webkitSpeechRecognition" in window)) {
-      alert("Please use Google Chrome.");
+      // REPLACE ALERT WITH TOAST
+      showErrorToast("Please use Google Chrome for voice recognition.");
       return;
     }
 
@@ -324,7 +255,7 @@ const CharacterInteractionScreen = () => {
     const recognition = new window.webkitSpeechRecognition();
     recognition.continuous = true; // Allow multiple sentences
     recognition.interimResults = true; // Get results while speaking (to reset timer)
-    recognition.lang = "en-IN"; // Use Indian English for better Hinglish support
+    recognition.lang = "hi-IN"; // Use Indian English for better Hinglish support
     // --- HELPER: RESET SILENCE TIMER ---
     const resetSilenceTimer = () => {
       // Clear existing timer
@@ -377,6 +308,15 @@ const CharacterInteractionScreen = () => {
       setIsListening(false);
       setAnimation("default");
       if (silenceTimer.current) clearTimeout(silenceTimer.current);
+
+      // ADD TOAST FOR MIC ERRORS
+      if (event.error === "not-allowed") {
+        showErrorToast(
+          "Microphone access denied. Please allow mic permissions."
+        );
+      } else if (event.error !== "no-speech") {
+        showErrorToast(`Microphone error: ${event.error}`);
+      }
     };
 
     recognition.onend = async () => {
@@ -449,8 +389,10 @@ const CharacterInteractionScreen = () => {
   const stopSong = () => {
     setCurrentSong(null);
     setAnimation("default");
-    if (bgAudioRef.current && isBgMusicOn)
+    if (bgAudioRef.current && isBgMusicOn) {
+      bgAudioRef.current.volume = 0.2; // Ensure volume resets
       bgAudioRef.current.play().catch((e) => console.log(e));
+    }
   };
 
   const handleModeSwitch = (mode) => {
@@ -466,6 +408,9 @@ const CharacterInteractionScreen = () => {
 
   return (
     <div className="min-h-screen w-full relative overflow-hidden font-sans bg-black">
+      {/* ADD TOASTER COMPONENT */}
+      <Toaster />
+
       {/* Background */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"
