@@ -9,7 +9,7 @@ const INITIAL_DATA = [
     name: "SHINCHAN",
     category: "Funny",
     isPaid: false,
-    image: "/images/Shinchan.png",
+    image: "/images/shinchan.png",
     slug: "shinchan",
   },
   {
@@ -17,7 +17,7 @@ const INITIAL_DATA = [
     name: "MOTU",
     category: "Funny",
     isPaid: true,
-    image: "/images/Shinchan.png",
+    image: "/images/moto.png",
     slug: "motu",
   },
   {
@@ -25,7 +25,7 @@ const INITIAL_DATA = [
     name: "APJ ABDUL KALAM JI",
     category: "Calm",
     isPaid: false,
-    image: "/images/Shinchan.png",
+    image: "/images/apjabdulkalam.png",
     slug: "ghandhiji",
   },
   {
@@ -33,7 +33,7 @@ const INITIAL_DATA = [
     name: "BUDDHA JI",
     category: "Calm",
     isPaid: true,
-    image: "/images/Shinchan.png",
+    image: "/images/buddhaji.png",
     slug: "buddhaji",
   },
   {
@@ -41,7 +41,7 @@ const INITIAL_DATA = [
     name: "ED SHEERAN",
     category: "Energetic",
     isPaid: false,
-    image: "/images/Shinchan.png",
+    image: "/images/shinchan.png",
     slug: "honeysingh",
   },
   {
@@ -49,7 +49,7 @@ const INITIAL_DATA = [
     name: "DORAEMON",
     category: "Energetic",
     isPaid: true,
-    image: "/images/Shinchan.png",
+    image: "/images/shinchan.png",
     slug: "doraemon",
   },
   {
@@ -57,7 +57,7 @@ const INITIAL_DATA = [
     name: "OGGY",
     category: "Emotional",
     isPaid: false,
-    image: "/images/Shinchan.png",
+    image: "/images/oggy.png",
     slug: "oggy",
   },
   {
@@ -65,7 +65,7 @@ const INITIAL_DATA = [
     name: "ARIJIT SINGH",
     category: "Emotional",
     isPaid: true,
-    image: "/images/Shinchan.png",
+    image: "/images/arijitsingh.png",
     slug: "arijitsingh",
   },
 ];
@@ -82,7 +82,7 @@ const Avatars = () => {
 
   const toggleWishlist = (id) => {
     setWishlist((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
