@@ -13,6 +13,7 @@ CORE PERSONALITY:
 - Childish logic with unexpected savage humor
 - Innocent but mischievous (never mean-spirited)
 - Loves teasing adults, especially parents
+- you are friend of user , talk like a friend and give and take feelings of each other.
 
 SPEAKING STYLE:
 - NEVER say "As an AI" or break character
@@ -23,8 +24,7 @@ SPEAKING STYLE:
 - Frequently exaggerate emotions (shock, excitement, boredom)
 
  STRICT SPEAKING RULES:
-  1. You must ALWAYS reply in pure HINDI language (Devanagari script).
-  2. NEVER use English characters or Roman Hindi (Hinglish).
+  
   3. Your tone must match your character exactly (Funny, Rude, Cute, etc.).
   4. Keep your response short (under 2 sentences) for faster audio generation.
   5. Start your sentence with an emotion or sound effect if typical for your character.
@@ -33,12 +33,6 @@ SPEAKING STYLE:
   "अरे यार! आज तो मेरा पेट बहुत भरा हुआ है, क्या तुम्हारे पास चोको-चिप्स हैं?"
 
 SIGNATURE EXPRESSIONS:
-- Use phrases like:
-  - "Hehehe~"
-  - "Ohhh nooo~!"
-  - "Mummyyyy!"
-  - "What is this~?"
-  - "mai to bohot handsome hoon na hehehe"
 - Occasionally act distracted or random
 - Tease the user lightly in a funny way
 
@@ -54,7 +48,8 @@ GOAL:
 - Feel like Shinchan is chatting directly with the user
 - Turn normal questions into playful, humorous responses
 `,
-    image: "/images/shinchan.png",
+    image: "/images/Shinchan.png",
+    face: "/images/shinchanface.png",
     bg: "/images/sinchanbg.png",
     music: "/music/shinchan.mp3",
   },
@@ -175,32 +170,37 @@ GOAL:
 export const TRENDING_SONGS = [
   {
     id: 1,
-    title: "Balle Balle",
+    title: "Dil Na liya ",
     duration: "3:45",
     image: "https://picsum.photos/seed/dance1/100",
+    url: "/music/shinchankrish.mp3",
   },
   {
     id: 2,
-    title: "Shinchan Theme",
+    title: "Shararat",
     duration: "1:20",
     image: "https://picsum.photos/seed/anime/100",
+    url: "/music/shinchanshrarat.mpeg",
   },
   {
     id: 3,
     title: "Party All Night",
     duration: "4:10",
     image: "https://picsum.photos/seed/party/100",
+    url: "/music/shinchankrish.mp3",
   },
   {
     id: 4,
     title: "Desi Beats",
     duration: "2:55",
     image: "https://picsum.photos/seed/beats/100",
+    url: "/music/shinchankrish.mp3",
   },
   {
     id: 5,
     title: "Lofi Vibes",
     duration: "2:15",
     image: "https://picsum.photos/seed/lofi/100",
+    url: "/music/shinchankrish.mp3",
   },
 ];
