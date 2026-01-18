@@ -90,9 +90,12 @@ const CharacterInteractionScreen = () => {
 
   // --- AUTO POSITION SHIFT ON CHAT MODE ---
   useEffect(() => {
+    // Only shift automatically on mobile/smaller screens where space is tight
+    const isMobile = window.innerWidth < 768;
+
     if (isChatMode) {
-      // Shift right when chat opens to make space for bubbles
-      setAvatarPosition((prev) => ({ ...prev, x: 120 }));
+      // Shift right when chat opens to clear the left side for bubbles
+      setAvatarPosition((prev) => ({ ...prev, x: isMobile ? 100 : 200 }));
     } else {
       // Center when chat closes
       setAvatarPosition((prev) => ({ ...prev, x: 0 }));
@@ -183,7 +186,7 @@ const CharacterInteractionScreen = () => {
         2. Mix Hindi and English naturally.
         3. Keep it casual, fun and conversational.
         4. DO NOT use Devanagari script here. Use English alphabet only.
-        5. Use relevant emojis based on conversation.
+        5. use relevant emojis based on conversation.
         `;
       }
 
@@ -419,7 +422,7 @@ const CharacterInteractionScreen = () => {
     // 4. Fade out bot bubble after 8 seconds
     setTimeout(() => {
       setChatBubbles((prev) => prev.filter((b) => b.id !== botBubbleId));
-    }, 20000);
+    }, 15000);
   };
 
   const handleKeyPress = (e) => {
@@ -502,65 +505,60 @@ const CharacterInteractionScreen = () => {
         style={{ backgroundImage: `url('${currentCharacter.bg}')` }}
       />
 
-      {/* Navigation */}
-      <div className="absolute top-0 left-0 w-full flex justify-between items-center p-6 pt-12 z-20 pointer-events-none">
+      {/* Navigation - Responsive Padding */}
+      <div className="absolute top-0 left-0 w-full flex justify-between items-center p-6 md:p-8 pt-12 z-20 pointer-events-none">
         <button
           onClick={handleBack}
-          className="pointer-events-auto w-10 h-10 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white shadow-lg"
+          className="pointer-events-auto w-10 h-10 md:w-12 md:h-12 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
         </button>
         <button
           onClick={toggleMenu}
-          className="pointer-events-auto w-10 h-10 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white shadow-lg"
+          className="pointer-events-auto w-10 h-10 md:w-12 md:h-12 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-5 h-5 md:w-6 md:h-6" />
         </button>
       </div>
 
-      {/* CHAT BUBBLES CONTAINER */}
-      <div className="absolute inset-0 z-25 pointer-events-none overflow-hidden">
+      {/* CHAT BUBBLES CONTAINER (Left Side Zone - Responsive Width) */}
+      <div className="absolute top-0 left-0 h-full w-[65%] md:w-[50%] lg:w-[45%] z-25 pointer-events-none overflow-hidden pl-4 md:pl-12">
         {chatBubbles.map((bubble) => (
           <div
             key={bubble.id}
-            className={`absolute w-full ${
+            className={`absolute w-full flex ${
               bubble.type === "user"
-                ? "left-0 animate-user-float-slow"
-                : "right-[80px] animate-bot-pop-right" // BOT POP FROM RIGHT
+                ? "animate-user-float-slow justify-start"
+                : "animate-bot-drop-left justify-start"
             }`}
             style={{
-              top: bubble.type === "user" ? "50%" : "20%", // Bot appears around chest height
-              display: "flex",
-              justifyContent:
-                bubble.type === "user" ? "flex-start" : "flex-end", // Alignment
-              paddingRight: bubble.type === "bot" ? "20px" : "0",
+              // Adjust start positions for desktop if needed
+              top: bubble.type === "user" ? "60%" : "30%",
+              paddingBottom: "20px",
             }}
           >
             {bubble.type === "user" ? (
-              /* --- USER BUBBLE (Left Side) --- */
-              <div className="flex items-center gap-2 pl-6">
-                {/* Dummy User Avatar */}
-                <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center border-2 border-white/50 shadow-md">
-                  <User className="w-6 h-6 text-white" />
+              /* --- USER BUBBLE --- */
+              <div className="flex items-center gap-2 md:gap-4">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-500 flex items-center justify-center border-2 border-white/50 shadow-md">
+                  <User className="w-6 h-6 md:w-7 md:h-7 text-white" />
                 </div>
-                <div className="bg-white/90 backdrop-blur-sm rounded-2xl rounded-tl-none px-4 py-3 shadow-lg max-w-[220px]">
-                  <p className="text-purple-900 font-bold text-sm leading-snug">
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl rounded-tl-none px-4 py-3 md:px-6 md:py-4 shadow-lg max-w-[200px] md:max-w-[350px]">
+                  <p className="text-purple-900 font-bold text-sm md:text-base leading-snug">
                     {bubble.text}
                   </p>
                 </div>
               </div>
             ) : (
-              /* --- BOT BUBBLE (Right Side) --- */
-              <div className="flex flex-row-reverse items-start gap-2 pr-6">
-                {/* Character Avatar */}
+              /* --- BOT BUBBLE --- */
+              <div className="flex items-start gap-2 md:gap-4">
                 <img
                   src={currentCharacter.face}
                   alt="avatar"
-                  className="w-10 h-10 rounded-full border-2 border-yellow-400 shadow-xl object-cover bg-white"
+                  className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-yellow-400 shadow-xl object-cover bg-white"
                 />
-                {/* Bubble */}
-                <div className="bg-yellow-400 text-black rounded-2xl rounded-tr-none px-4 py-3 shadow-lg max-w-[240px]">
-                  <p className="font-bold text-[12px] leading-snug">
+                <div className="bg-yellow-400 text-black rounded-2xl rounded-tl-none px-4 py-3 md:px-6 md:py-4 shadow-lg max-w-[240px] md:max-w-[400px]">
+                  <p className="font-bold text-sm md:text-base leading-snug">
                     {bubble.text}
                   </p>
                 </div>
@@ -570,25 +568,25 @@ const CharacterInteractionScreen = () => {
         ))}
       </div>
 
-      {/* Song Player Widget */}
+      {/* Song Player Widget - Responsive Position */}
       {currentSong && (
-        <div className="absolute top-24 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto">
-          <div className="px-3 py-1.5 bg-black/70 backdrop-blur-md rounded-full border border-pink-500/30 flex items-center gap-2 shadow-lg">
+        <div className="absolute top-24 md:top-28 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto">
+          <div className="px-3 py-1.5 md:px-5 md:py-3 bg-black/70 backdrop-blur-md rounded-full border border-pink-500/30 flex items-center gap-2 md:gap-4 shadow-lg">
             <img
               src={currentSong.image}
               alt="art"
-              className={`w-7 h-7 rounded-full object-cover ${
+              className={`w-7 h-7 md:w-10 md:h-10 rounded-full object-cover ${
                 isSongPlaying ? "animate-[spin_4s_linear_infinite]" : ""
               }`}
             />
             <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-white max-w-[100px] truncate">
+              <span className="text-[10px] md:text-xs font-bold text-white max-w-[100px] md:max-w-[150px] truncate">
                 {currentSong.title}
               </span>
             </div>
             <button
               onClick={toggleSongPlayback}
-              className="w-6 h-6 rounded-full bg-pink-500 flex items-center justify-center"
+              className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-pink-500 flex items-center justify-center"
             >
               {isSongPlaying ? (
                 <Pause className="w-3 h-3 text-white" />
@@ -598,7 +596,7 @@ const CharacterInteractionScreen = () => {
             </button>
             <button
               onClick={stopSong}
-              className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center"
+              className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-red-600 flex items-center justify-center"
             >
               <X className="w-3 h-3 text-white" />
             </button>
@@ -606,35 +604,35 @@ const CharacterInteractionScreen = () => {
         </div>
       )}
 
-      {/* Bg Music Toggle */}
+      {/* Bg Music Toggle - Responsive Position */}
       <button
         onClick={toggleBgMusic}
-        className="absolute top-35 right-6 z-20 pointer-events-auto w-10 h-10 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white shadow-lg"
+        className="absolute top-35 md:top-40 right-6 md:right-8 z-20 pointer-events-auto w-10 h-10 md:w-12 md:h-12 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white shadow-lg hover:scale-105 transition-transform"
       >
         {isBgMusicOn ? (
-          <Volume2 className="w-5 h-5 text-pink-300" />
+          <Volume2 className="w-5 h-5 md:w-6 md:h-6 text-pink-300" />
         ) : (
-          <VolumeX className="w-5 h-5 text-gray-400" />
+          <VolumeX className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />
         )}
       </button>
 
       {/* Side Menu */}
       <div
-        className={`fixed inset-y-0 right-0 w-64 bg-[#1a0b2e]/95 backdrop-blur-xl border-l border-white/10 z-50 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 right-0 w-64 md:w-80 bg-[#1a0b2e]/95 backdrop-blur-xl border-l border-white/10 z-50 transform transition-transform duration-300 ease-in-out ${
           isMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="p-6">
+        <div className="p-6 md:p-8">
           <div className="flex justify-between items-center mb-8">
-            <h2 className="text-xl font-bold text-white">Menu</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-white">Menu</h2>
             <button
               onClick={toggleMenu}
               className="text-gray-400 hover:text-white"
             >
-              <X className="w-6 h-6" />
+              <X className="w-6 h-6 md:w-8 md:h-8" />
             </button>
           </div>
-          <ul className="space-y-4 text-gray-300">
+          <ul className="space-y-6 text-gray-300 text-lg">
             <li>Profile</li>
             <li>Settings</li>
             <li>Logout</li>
@@ -645,7 +643,7 @@ const CharacterInteractionScreen = () => {
         <div onClick={toggleMenu} className="fixed inset-0 bg-black/50 z-40" />
       )}
 
-      {/* Character Model (Draggable) */}
+      {/* Character Model (Draggable & Responsive Size) */}
       <div className="absolute inset-0 flex items-end justify-center z-10 pointer-events-none">
         <div
           className="absolute bottom-0 w-full flex justify-center pointer-events-auto transition-transform duration-500 ease-in-out"
@@ -656,9 +654,10 @@ const CharacterInteractionScreen = () => {
           onMouseDown={handleDragStart}
           onTouchStart={handleDragStart}
         >
-          <div className="w-[90vw] max-w-[420px] h-[520px] relative overflow-visible bg-transparent">
+          {/* RESPONSIVE AVATAR CONTAINER */}
+          <div className="w-[90vw] h-[520px] max-w-[420px] md:max-w-[600px] md:h-[70vh] md:w-auto relative overflow-visible bg-transparent">
             <div className="absolute top-0 right-0 bg-white/20 p-1 rounded-full text-white/50 hover:text-white hover:bg-white/40 transition-colors">
-              <Move className="w-4 h-4" />
+              <Move className="w-4 h-4 md:w-6 md:h-6" />
             </div>
             <ShinchanModel
               animation={animation}
@@ -670,14 +669,13 @@ const CharacterInteractionScreen = () => {
 
       {/* Controls - FIXED TO BOTTOM */}
       <div className="fixed bottom-0 left-0 w-full z-30 flex flex-col items-center">
-        {/* Chat Input */}
+        {/* Chat Input - Responsive Width & Spacing */}
         {showChatInput && isChatMode && (
-          <div className="w-full bg-[#1a0b2e] border-t border-purple-500/30 p-3 pointer-events-auto pb-6">
-            <div className="flex items-center gap-2">
-              {/* DANCE ICON IN CHAT MODE */}
+          <div className="w-full bg-[#1a0b2e] border-t border-purple-500/30 p-3 md:p-6 pointer-events-auto pb-6 md:pb-8">
+            <div className="flex items-center gap-3 max-w-4xl mx-auto">
               <button
                 onClick={handleDanceClick}
-                className="w-10 h-10 rounded-full bg-purple-900/60 border border-purple-500/50 flex items-center justify-center hover:bg-purple-800 shadow-lg"
+                className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-purple-900/60 border border-purple-500/50 flex items-center justify-center hover:bg-purple-800 shadow-lg"
               >
                 <img src="/images/dance.png" width={20} alt="dance" />
               </button>
@@ -688,39 +686,44 @@ const CharacterInteractionScreen = () => {
                 onChange={(e) => setChatMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="Type a message..."
-                className="flex-1 px-4 py-3 bg-[#2a1b3d] border border-purple-500/20 rounded-full text-white placeholder-gray-400 focus:outline-none focus:border-pink-500 text-sm"
+                className="flex-1 px-4 py-3 md:px-6 md:py-4 bg-[#2a1b3d] border border-purple-500/20 rounded-full text-white placeholder-gray-400 focus:outline-none focus:border-pink-500 text-sm md:text-base"
               />
               <button
                 onClick={handleSendMessage}
                 disabled={!chatMessage.trim() || isProcessing}
-                className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center shadow-lg disabled:opacity-50"
+                className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center shadow-lg disabled:opacity-50 hover:scale-105 transition-transform"
               >
                 {isProcessing ? (
-                  <Loader2 className="w-5 h-5 text-white animate-spin" />
+                  <Loader2 className="w-5 h-5 md:w-6 md:h-6 text-white animate-spin" />
                 ) : (
-                  <Send className="w-5 h-5 text-white" />
+                  <Send className="w-5 h-5 md:w-6 md:h-6 text-white" />
                 )}
               </button>
             </div>
 
             <button
               onClick={handleChatClick}
-              className="absolute -top-10 right-4 w-8 h-8 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/20 pointer-events-auto hover:bg-red-500/50 transition-colors"
+              className="absolute -top-10 right-4 md:right-10 w-8 h-8 md:w-10 md:h-10 bg-black/50 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/20 pointer-events-auto hover:bg-red-500/50 transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
         )}
 
-        {/* Standard Buttons */}
+        {/* Standard Buttons - Centered and Contained on Desktop */}
         {!showChatInput && (
-          <div className="w-full pb-8 px-6">
-            <div className="flex justify-between items-center w-full mb-6 px-4">
+          <div className="w-full pb-8 px-6 md:pb-10 max-w-4xl mx-auto">
+            <div className="flex justify-between items-center w-full mb-6 px-4 md:px-12">
               <button
                 onClick={handleDanceClick}
-                className="pointer-events-auto w-12 h-12 rounded-full backdrop-blur-md border border-purple-500/50 bg-purple-900/60 flex items-center justify-center hover:bg-purple-800 shadow-lg"
+                className="pointer-events-auto w-12 h-12 md:w-16 md:h-16 rounded-full backdrop-blur-md border border-purple-500/50 bg-purple-900/60 flex items-center justify-center hover:bg-purple-800 shadow-lg hover:scale-110 transition-transform"
               >
-                <img src="/images/dance.png" width={30} alt="dance" />
+                <img
+                  src="/images/dance.png"
+                  width={30}
+                  alt="dance"
+                  className="md:w-10"
+                />
               </button>
 
               <div className="relative flex items-center justify-center pointer-events-auto">
@@ -733,7 +736,7 @@ const CharacterInteractionScreen = () => {
                 <button
                   onClick={handleMicToggle}
                   disabled={isProcessing}
-                  className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_5px_rgba(168,85,247,0.4)] transition-all duration-300 active:scale-95 ${
+                  className={`relative z-10 w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_5px_rgba(168,85,247,0.4)] transition-all duration-300 active:scale-95 hover:scale-105 ${
                     isProcessing
                       ? "bg-purple-600/80"
                       : isListening
@@ -742,10 +745,10 @@ const CharacterInteractionScreen = () => {
                   }`}
                 >
                   {isProcessing ? (
-                    <Loader2 className="w-8 h-8 animate-spin" />
+                    <Loader2 className="w-8 h-8 md:w-10 md:h-10 animate-spin" />
                   ) : (
                     <Mic
-                      className={`w-8 h-8 ${
+                      className={`w-8 h-8 md:w-10 md:h-10 ${
                         isListening ? "animate-pulse" : ""
                       }`}
                     />
@@ -755,13 +758,13 @@ const CharacterInteractionScreen = () => {
 
               <button
                 onClick={handleChatClick}
-                className="pointer-events-auto w-12 h-12 rounded-full backdrop-blur-md border border-purple-500/50 bg-purple-900/60 flex items-center justify-center hover:bg-purple-800 shadow-lg"
+                className="pointer-events-auto w-12 h-12 md:w-16 md:h-16 rounded-full backdrop-blur-md border border-purple-500/50 bg-purple-900/60 flex items-center justify-center hover:bg-purple-800 shadow-lg hover:scale-110 transition-transform"
               >
-                <MessageCircle className="w-6 h-6 text-white" />
+                <MessageCircle className="w-6 h-6 md:w-8 md:h-8 text-white" />
               </button>
             </div>
 
-            <div className="flex w-full bg-purple-900/40 backdrop-blur-md rounded-full p-1 border border-white/10 relative pointer-events-auto">
+            <div className="flex w-full bg-purple-900/40 backdrop-blur-md rounded-full p-1 border border-white/10 relative pointer-events-auto max-w-lg mx-auto">
               <div
                 className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-gradient-to-r from-pink-500 to-purple-600 rounded-full transition-all duration-300 shadow-lg ${
                   activeMode === "Friend" ? "left-[calc(50%+2px)]" : "left-1"
@@ -769,7 +772,7 @@ const CharacterInteractionScreen = () => {
               ></div>
               <button
                 onClick={() => handleModeSwitch("Mimic")}
-                className={`flex-1 relative z-10 py-3 text-sm font-medium transition-colors duration-300 ${
+                className={`flex-1 relative z-10 py-3 md:py-4 text-sm md:text-base font-medium transition-colors duration-300 ${
                   activeMode === "Mimic" ? "text-white" : "text-gray-300"
                 }`}
               >
@@ -777,7 +780,7 @@ const CharacterInteractionScreen = () => {
               </button>
               <button
                 onClick={() => handleModeSwitch("Friend")}
-                className={`flex-1 relative z-10 py-3 text-sm font-medium transition-colors duration-300 ${
+                className={`flex-1 relative z-10 py-3 md:py-4 text-sm md:text-base font-medium transition-colors duration-300 ${
                   activeMode === "Friend" ? "text-white" : "text-gray-300"
                 }`}
               >
@@ -788,14 +791,14 @@ const CharacterInteractionScreen = () => {
         )}
       </div>
 
-      {/* Song List Popup */}
+      {/* Song List Popup - Responsive Width */}
       {showSongList && (
         <>
           <div
             onClick={() => setShowSongList(false)}
             className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity"
           />
-          <div className="fixed bottom-0 left-0 w-full bg-[#1e102f] rounded-t-[2rem] z-50 p-6 border-t border-white/10 shadow-2xl animate-slide-up">
+          <div className="fixed bottom-0 left-0 w-full md:w-[500px] md:left-1/2 md:-translate-x-1/2 md:rounded-2xl md:bottom-4 bg-[#1e102f] rounded-t-[2rem] z-50 p-6 border-t md:border border-white/10 shadow-2xl animate-slide-up">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-white font-bold text-xl">
@@ -814,7 +817,7 @@ const CharacterInteractionScreen = () => {
                 <div
                   key={song.id}
                   onClick={() => selectSong(song)}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-[#2a1b3d] border border-white/5 active:bg-[#3d2757] cursor-pointer"
+                  className="flex items-center justify-between p-3 rounded-2xl bg-[#2a1b3d] border border-white/5 active:bg-[#3d2757] cursor-pointer hover:bg-[#3d2757]"
                 >
                   <div className="flex items-center gap-4">
                     <img
@@ -854,16 +857,15 @@ const CharacterInteractionScreen = () => {
             100% { transform: translateY(-300px) scale(1); opacity: 0; }
         }
 
-        /* Bot Pop Right: Pops out from Avatar (Right Side) */
-        @keyframes bot-pop-right {
-            0% { transform: translateX(50px) scale(0.5); opacity: 0; }
-            20% { transform: translateX(0) scale(1); opacity: 1; }
-            80% { transform: translateX(0) scale(1); opacity: 1; }
-            100% { transform: translateX(-10px) translateY(-20px) scale(0.9); opacity: 0; }
+        @keyframes bot-drop-left {
+            0% { top: 0; transform: translateY(-50px) scale(0.8); opacity: 0; }
+            10% { top: 40%; transform: translateY(0) scale(1); opacity: 1; }
+            90% { top: 40%; opacity: 1; }
+            100% { top: 35%; opacity: 0; }
         }
 
         .animate-user-float-slow { animation: user-float-slow 4s ease-out forwards; }
-        .animate-bot-pop-right { animation: bot-pop-right 6s ease-in-out forwards; }
+        .animate-bot-drop-left { animation: bot-drop-left 8s ease-in-out forwards; }
         .animate-ripple { animation: ripple 2s linear infinite; }
         .animate-ping-slow { animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
         .animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }

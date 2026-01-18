@@ -17,17 +17,12 @@ function Shinchan({ animation }) {
   const actions = useRef({});
 
   // Load IDLE always
-  const idleFbx = useLoader(
-    FBXLoader,
-    "/models/shinchan/idle.fbx"
-  );
+  const idleFbx = useLoader(FBXLoader, "/models/shinchan/idle.fbx");
 
   // Load current animation (wave, dance, talk…)
   const animFbx = useLoader(
     FBXLoader,
-    animation !== "idle"
-      ? `/models/shinchan/${animation}.fbx`
-      : null
+    animation !== "idle" ? `/models/shinchan/${animation}.fbx` : null
   );
 
   // Setup model once
@@ -48,9 +43,7 @@ function Shinchan({ animation }) {
     mixer.current = new THREE.AnimationMixer(idleFbx);
 
     // Idle action (loop)
-    actions.current.idle = mixer.current.clipAction(
-      idleFbx.animations[0]
-    );
+    actions.current.idle = mixer.current.clipAction(idleFbx.animations[0]);
     actions.current.idle.play();
 
     return () => mixer.current.stopAllAction();
@@ -58,72 +51,69 @@ function Shinchan({ animation }) {
 
   // Handle animation switching
   // Handle animation switching
- useEffect(() => {
-  if (!mixer.current || !idleFbx) return;
+  useEffect(() => {
+    if (!mixer.current || !idleFbx) return;
 
-  const mixerInstance = mixer.current;
+    const mixerInstance = mixer.current;
 
-  // 🔥 STOP EVERYTHING FIRST (CRITICAL)
-  mixerInstance.stopAllAction();
-  mixerInstance.removeEventListener("finished", () => {});
+    // 🔥 STOP EVERYTHING FIRST (CRITICAL)
+    mixerInstance.stopAllAction();
+    mixerInstance.removeEventListener("finished", () => {});
 
-  const idleAction = mixerInstance.clipAction(idleFbx.animations[0]);
-  idleAction.setLoop(THREE.LoopRepeat);
-  idleAction.reset().fadeIn(0.3).play();
+    const idleAction = mixerInstance.clipAction(idleFbx.animations[0]);
+    idleAction.setLoop(THREE.LoopRepeat);
+    idleAction.reset().fadeIn(0.3).play();
 
-  // 👉 IDLE ONLY
-  if (animation === "idle" || !animFbx) return;
+    // 👉 IDLE ONLY
+    if (animation === "idle" || !animFbx) return;
 
-  const action = mixerInstance.clipAction(animFbx.animations[0]);
+    const action = mixerInstance.clipAction(animFbx.animations[0]);
 
-  // 🕺 DANCE → LOOP UNTIL SONG STOPS
-  if (animation === "dance") {
+    // 🕺 DANCE → LOOP UNTIL SONG STOPS
+    if (animation === "dance") {
+      idleAction.fadeOut(0.3);
+
+      action.reset();
+      action.setLoop(THREE.LoopRepeat);
+      action.clampWhenFinished = false;
+      action.fadeIn(0.3).play();
+
+      return;
+    }
+
+    // 🎤 LISTEN / TALK → LOOP
+    if (animation === "listen" || animation === "Talking") {
+      idleAction.fadeOut(0.3);
+
+      action.reset();
+      action.setLoop(THREE.LoopRepeat);
+      action.clampWhenFinished = false;
+      action.fadeIn(0.3).play();
+
+      return;
+    }
+
+    // 👋 WAVE / DEFAULT → PLAY ONCE → BACK TO IDLE
     idleAction.fadeOut(0.3);
 
     action.reset();
-    action.setLoop(THREE.LoopRepeat);
-    action.clampWhenFinished = false;
+    action.setLoop(THREE.LoopOnce, 1);
+    action.clampWhenFinished = true;
     action.fadeIn(0.3).play();
 
-    return;
-  }
+    const onFinished = () => {
+      mixerInstance.removeEventListener("finished", onFinished);
 
-  // 🎤 LISTEN / TALK → LOOP
-  if (animation === "listen" || animation === "Talking") {
-    idleAction.fadeOut(0.3);
+      action.fadeOut(0.4);
+      idleAction.reset().fadeIn(0.4).play();
+    };
 
-    action.reset();
-    action.setLoop(THREE.LoopRepeat);
-    action.clampWhenFinished = false;
-    action.fadeIn(0.3).play();
+    mixerInstance.addEventListener("finished", onFinished);
 
-    return;
-  }
-
-  // 👋 WAVE / DEFAULT → PLAY ONCE → BACK TO IDLE
-  idleAction.fadeOut(0.3);
-
-  action.reset();
-  action.setLoop(THREE.LoopOnce, 1);
-  action.clampWhenFinished = true;
-  action.fadeIn(0.3).play();
-
-  const onFinished = () => {
-    mixerInstance.removeEventListener("finished", onFinished);
-
-    action.fadeOut(0.4);
-    idleAction.reset().fadeIn(0.4).play();
-  };
-
-  mixerInstance.addEventListener("finished", onFinished);
-
-  return () => {
-    mixerInstance.removeEventListener("finished", onFinished);
-  };
-}, [animation, animFbx, idleFbx]);
-
-
-
+    return () => {
+      mixerInstance.removeEventListener("finished", onFinished);
+    };
+  }, [animation, animFbx, idleFbx]);
 
   useFrame((_, delta) => mixer.current?.update(delta));
 
