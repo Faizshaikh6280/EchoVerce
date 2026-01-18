@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import ShinchanModel from "../components/ShinchanModel";
-import { Toaster } from "react-hot-toast";
-import { showErrorToast } from "../utils/toast";
+import CharacterModel from "../components/CharacterModel";
+import { Toaster } from "react-hot-toast"; // ADD THIS
+import { showErrorToast } from "../utils/toast"; // ADD THIS
 
 import {
   ChevronLeft,
@@ -42,7 +42,7 @@ const CharacterInteractionScreen = () => {
   const transcriptAccumulator = useRef("");
   const chatInputRef = useRef(null);
 
-  const [animation, setAnimation] = useState("default");
+  const [animation, setAnimation] = useState("idle");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeMode, setActiveMode] = useState("Mimic");
   const [isListening, setIsListening] = useState(false);
@@ -68,7 +68,7 @@ const CharacterInteractionScreen = () => {
   useEffect(() => {
     stopListening();
     stopSong();
-    setAnimation("default");
+    setAnimation("idle");
     setIsListening(false);
     setIsProcessing(false);
     console.log(`Switched to new thread for: ${currentCharacter.name}`);
@@ -169,6 +169,22 @@ const CharacterInteractionScreen = () => {
   }, [isDragging]);
 
   // --- 1. INTELLIGENCE (Gemini LLM) ---
+  // Top-level useEffect to handle BG music pause/play based on mic
+  useEffect(() => {
+    const bgAudio = bgAudioRef.current;
+    if (!bgAudio) return;
+
+    if (isListening) {
+      bgAudio.pause(); // stop music immediately
+    } else {
+      if (isBgMusicOn && !currentSong) {
+        bgAudio.volume = 0.2;
+        bgAudio.play().catch(() => { });
+      }
+    }
+  }, [isListening, isBgMusicOn, currentSong]);
+
+  // Single fetchLLMResponse function
   const fetchLLMResponse = async (userText, isVoiceMode = true) => {
     try {
       console.log(`📤 Sending to Gemini (${currentCharacter.name}):`, userText);
@@ -186,8 +202,7 @@ const CharacterInteractionScreen = () => {
         2. Mix Hindi and English naturally.
         3. Keep it casual, fun and conversational.
         4. DO NOT use Devanagari script here. Use English alphabet only.
-        5. use relevant emojis based on conversation.
-        `;
+        5. Use relevant emojis based on conversation.`;
       }
 
       const response = await fetch("http://localhost:3000/api/llm", {
@@ -201,8 +216,7 @@ const CharacterInteractionScreen = () => {
         }),
       });
 
-      if (!response.ok)
-        throw new Error(`Backend LLM Error: ${response.status}`);
+      if (!response.ok) throw new Error(`Backend LLM Error: ${response.status}`);
 
       const data = await response.json();
       const botReply = data.reply || "Empty response";
@@ -215,7 +229,7 @@ const CharacterInteractionScreen = () => {
           { role: "user", content: userText },
           { role: "assistant", content: botReply },
         ];
-        return newHistory.slice(-20);
+        return newHistory.slice(-20); // Keep last 20 messages
       });
 
       return botReply;
@@ -228,6 +242,7 @@ const CharacterInteractionScreen = () => {
     }
   };
 
+
   // --- 2. VOICE OUTPUT (Voice Mode Only) ---
   const speakWithMiniMax = async (text) => {
     if (!text) return;
@@ -237,7 +252,7 @@ const CharacterInteractionScreen = () => {
       audio.pause();
       audio.currentTime = 0;
     }
-    if (animation !== "dance") setAnimation("default");
+    if (animation !== "dance") setAnimation("idle");
 
     console.log("🔊 Requesting Audio for:", text);
 
@@ -272,24 +287,41 @@ const CharacterInteractionScreen = () => {
       };
 
       audio.onended = () => {
-        if (animation !== "dance") setAnimation("default");
+        if (animation !== "dance") setAnimation("idle");
         if (bgAudioRef.current && isBgMusicOn && !currentSong)
           bgAudioRef.current.volume = 0.2;
+        console.log("⏹️ Finished.");
+        setAnimation("idle"); // <--- FORCE ANIMATION OFF
+
+        // --- NEW: Restore BG Music Volume ---
+        if (bgAudioRef.current && isBgMusicOn) {
+          bgAudioRef.current.volume = 0.2; // Restore to 20% volume
+        }
       };
 
       audio.onerror = (e) => {
         console.error("Audio Playback Error", e);
-        if (animation !== "dance") setAnimation("default");
+        if (animation !== "dance") setAnimation("idle");
         if (bgAudioRef.current && isBgMusicOn && !currentSong)
           bgAudioRef.current.volume = 0.2;
+        setAnimation("idle");
+        // Restore volume if error occurs
+        if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
+        // ADD TOAST FOR AUDIO PLAYBACK ERROR
+        showErrorToast("Audio playback failed. Please try again.");
       };
 
       await audio.play();
     } catch (error) {
       console.error("❌ TTS Failed:", error.message);
-      if (animation !== "dance") setAnimation("default");
+      if (animation !== "dance") setAnimation("idle");
       if (bgAudioRef.current && isBgMusicOn && !currentSong)
         bgAudioRef.current.volume = 0.2;
+      setAnimation("idle");
+      // REPLACE ALERT WITH TOAST
+      showErrorToast(`Voice generation failed: ${error.message}`);
+
+      if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
     }
   };
 
@@ -340,7 +372,8 @@ const CharacterInteractionScreen = () => {
         }
       }
       setIsListening(false);
-      if (animation !== "dance") setAnimation("default");
+      if (animation !== "dance") setAnimation("idle");
+      setAnimation("idle");
       if (silenceTimer.current) clearTimeout(silenceTimer.current);
     };
 
@@ -360,7 +393,8 @@ const CharacterInteractionScreen = () => {
           await speakWithMiniMax(finalFullText);
         }
       } else {
-        if (animation !== "dance") setAnimation("default");
+        // No text captured
+        setAnimation("idle");
       }
     };
 
@@ -440,6 +474,7 @@ const CharacterInteractionScreen = () => {
     setIsListening(false);
     if (recognitionRef.current) recognitionRef.current.stop();
     setShowSongList(false);
+    if (animation !== "dance") setAnimation("idle");
     if (bgAudioRef.current) bgAudioRef.current.pause();
 
     setAnimation("dance");
@@ -457,7 +492,7 @@ const CharacterInteractionScreen = () => {
     };
     songAudio.onpause = () => {
       setIsSongPlaying(false);
-      setAnimation("default");
+      setAnimation("idle");
     };
     songAudio.onended = () => {
       setIsSongPlaying(false);
@@ -472,7 +507,7 @@ const CharacterInteractionScreen = () => {
     songAudio.currentTime = 0;
     setCurrentSong(null);
     setIsSongPlaying(false);
-    setAnimation("default");
+    setAnimation("idle");
     if (bgAudioRef.current && isBgMusicOn) {
       bgAudioRef.current.volume = 0.2;
       bgAudioRef.current.play().catch((e) => console.log(e));
@@ -488,7 +523,7 @@ const CharacterInteractionScreen = () => {
   const handleModeSwitch = (mode) => {
     setActiveMode(mode);
     setIsListening(false);
-    if (animation !== "dance") setAnimation("default");
+    if (animation !== "dance") setAnimation("idle");
   };
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -526,11 +561,10 @@ const CharacterInteractionScreen = () => {
         {chatBubbles.map((bubble) => (
           <div
             key={bubble.id}
-            className={`absolute w-full flex ${
-              bubble.type === "user"
-                ? "animate-user-float-slow justify-start"
-                : "animate-bot-drop-left justify-start"
-            }`}
+            className={`absolute w-full flex ${bubble.type === "user"
+              ? "animate-user-float-slow justify-start"
+              : "animate-bot-drop-left justify-start"
+              }`}
             style={{
               // Adjust start positions for desktop if needed
               top: bubble.type === "user" ? "60%" : "30%",
@@ -575,9 +609,8 @@ const CharacterInteractionScreen = () => {
             <img
               src={currentSong.image}
               alt="art"
-              className={`w-7 h-7 md:w-10 md:h-10 rounded-full object-cover ${
-                isSongPlaying ? "animate-[spin_4s_linear_infinite]" : ""
-              }`}
+              className={`w-7 h-7 md:w-10 md:h-10 rounded-full object-cover ${isSongPlaying ? "animate-[spin_4s_linear_infinite]" : ""
+                }`}
             />
             <div className="flex flex-col">
               <span className="text-[10px] md:text-xs font-bold text-white max-w-[100px] md:max-w-[150px] truncate">
@@ -618,9 +651,8 @@ const CharacterInteractionScreen = () => {
 
       {/* Side Menu */}
       <div
-        className={`fixed inset-y-0 right-0 w-64 md:w-80 bg-[#1a0b2e]/95 backdrop-blur-xl border-l border-white/10 z-50 transform transition-transform duration-300 ease-in-out ${
-          isMenuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`fixed inset-y-0 right-0 w-64 md:w-80 bg-[#1a0b2e]/95 backdrop-blur-xl border-l border-white/10 z-50 transform transition-transform duration-300 ease-in-out ${isMenuOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         <div className="p-6 md:p-8">
           <div className="flex justify-between items-center mb-8">
@@ -659,10 +691,12 @@ const CharacterInteractionScreen = () => {
             <div className="absolute top-0 right-0 bg-white/20 p-1 rounded-full text-white/50 hover:text-white hover:bg-white/40 transition-colors">
               <Move className="w-4 h-4 md:w-6 md:h-6" />
             </div>
-            <ShinchanModel
+            <CharacterModel
               animation={animation}
-              image={currentCharacter.image}
+              modelPath={currentCharacter.modelPath}
             />
+
+
           </div>
         </div>
       </div>
@@ -736,21 +770,19 @@ const CharacterInteractionScreen = () => {
                 <button
                   onClick={handleMicToggle}
                   disabled={isProcessing}
-                  className={`relative z-10 w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_5px_rgba(168,85,247,0.4)] transition-all duration-300 active:scale-95 hover:scale-105 ${
-                    isProcessing
-                      ? "bg-purple-600/80"
-                      : isListening
+                  className={`relative z-10 w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_5px_rgba(168,85,247,0.4)] transition-all duration-300 active:scale-95 hover:scale-105 ${isProcessing
+                    ? "bg-purple-600/80"
+                    : isListening
                       ? "bg-gradient-to-b from-pink-500 to-purple-600 scale-105 border-2 border-white/20"
                       : "bg-gradient-to-b from-purple-500 to-purple-800"
-                  }`}
+                    }`}
                 >
                   {isProcessing ? (
                     <Loader2 className="w-8 h-8 md:w-10 md:h-10 animate-spin" />
                   ) : (
                     <Mic
-                      className={`w-8 h-8 md:w-10 md:h-10 ${
-                        isListening ? "animate-pulse" : ""
-                      }`}
+                      className={`w-8 h-8 md:w-10 md:h-10 ${isListening ? "animate-pulse" : ""
+                        }`}
                     />
                   )}
                 </button>
@@ -766,23 +798,20 @@ const CharacterInteractionScreen = () => {
 
             <div className="flex w-full bg-purple-900/40 backdrop-blur-md rounded-full p-1 border border-white/10 relative pointer-events-auto max-w-lg mx-auto">
               <div
-                className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-gradient-to-r from-pink-500 to-purple-600 rounded-full transition-all duration-300 shadow-lg ${
-                  activeMode === "Friend" ? "left-[calc(50%+2px)]" : "left-1"
-                }`}
+                className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-gradient-to-r from-pink-500 to-purple-600 rounded-full transition-all duration-300 shadow-lg ${activeMode === "Friend" ? "left-[calc(50%+2px)]" : "left-1"
+                  }`}
               ></div>
               <button
                 onClick={() => handleModeSwitch("Mimic")}
-                className={`flex-1 relative z-10 py-3 md:py-4 text-sm md:text-base font-medium transition-colors duration-300 ${
-                  activeMode === "Mimic" ? "text-white" : "text-gray-300"
-                }`}
+                className={`flex-1 relative z-10 py-3 md:py-4 text-sm md:text-base font-medium transition-colors duration-300 ${activeMode === "Mimic" ? "text-white" : "text-gray-300"
+                  }`}
               >
                 Mimic Mode
               </button>
               <button
                 onClick={() => handleModeSwitch("Friend")}
-                className={`flex-1 relative z-10 py-3 md:py-4 text-sm md:text-base font-medium transition-colors duration-300 ${
-                  activeMode === "Friend" ? "text-white" : "text-gray-300"
-                }`}
+                className={`flex-1 relative z-10 py-3 md:py-4 text-sm md:text-base font-medium transition-colors duration-300 ${activeMode === "Friend" ? "text-white" : "text-gray-300"
+                  }`}
               >
                 Friend Mode
               </button>

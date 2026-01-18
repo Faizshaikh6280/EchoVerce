@@ -17,7 +17,7 @@ const INITIAL_DATA = [
     name: "MOTU",
     category: "Funny",
     isPaid: true,
-    image: "/images/moto.png",
+    image: "/images/motu.png",
     slug: "motu",
   },
   {
@@ -25,15 +25,15 @@ const INITIAL_DATA = [
     name: "APJ ABDUL KALAM JI",
     category: "Calm",
     isPaid: false,
-    image: "/images/apjabdulkalam.png",
-    slug: "ghandhiji",
+    image: "/images/apj.png",
+    slug: "apj-abdul-kalam",
   },
   {
     id: 4,
     name: "BUDDHA JI",
     category: "Calm",
     isPaid: true,
-    image: "/images/buddhaji.png",
+    image: "/images/buddhag.png",
     slug: "buddhaji",
   },
   {
@@ -41,15 +41,15 @@ const INITIAL_DATA = [
     name: "ED SHEERAN",
     category: "Energetic",
     isPaid: false,
-    image: "/images/shinchan.png",
-    slug: "honeysingh",
+    image: "/images/ed.png",
+    slug: "ed-sheeran",
   },
   {
     id: 6,
     name: "DORAEMON",
     category: "Energetic",
     isPaid: true,
-    image: "/images/shinchan.png",
+    image: "/images/doremon.png",
     slug: "doraemon",
   },
   {
@@ -65,7 +65,7 @@ const INITIAL_DATA = [
     name: "ARIJIT SINGH",
     category: "Emotional",
     isPaid: true,
-    image: "/images/arijitsingh.png",
+    image: "/images/arjit.png",
     slug: "arijitsingh",
   },
 ];
@@ -154,11 +154,10 @@ const Avatars = () => {
                   <button
                     key={filter}
                     onClick={() => setActiveFilter(filter)}
-                    className={`px-5 py-1.5 rounded-full text-sm md:text-base md:px-6 md:py-2 whitespace-nowrap transition-all flex-shrink-0 duration-300 ${
-                      activeFilter === filter
-                        ? "bg-gradient-to-r from-pink-400 to-purple-500 text-white font-bold shadow-lg shadow-purple-500/30 scale-105"
-                        : "bg-[#2a1b3d] text-gray-400 border border-gray-700 hover:border-gray-500 hover:text-white"
-                    }`}
+                    className={`px-5 py-1.5 rounded-full text-sm md:text-base md:px-6 md:py-2 whitespace-nowrap transition-all flex-shrink-0 duration-300 ${activeFilter === filter
+                      ? "bg-gradient-to-r from-pink-400 to-purple-500 text-white font-bold shadow-lg shadow-purple-500/30 scale-105"
+                      : "bg-[#2a1b3d] text-gray-400 border border-gray-700 hover:border-gray-500 hover:text-white"
+                      }`}
                   >
                     {filter}
                   </button>
@@ -171,6 +170,8 @@ const Avatars = () => {
             </h1>
           )}
         </div>
+
+
       </div>
 
       {/* --- CONTENT AREA WRAPPER --- */}
@@ -244,11 +245,10 @@ const Avatars = () => {
             className="relative flex flex-col items-center justify-center group"
           >
             <Home
-              className={`w-6 h-6 md:w-7 md:h-7 transition-all duration-300 ${
-                activeTab === "home"
-                  ? "text-pink-300 scale-110 drop-shadow-[0_0_8px_rgba(249,168,212,0.6)]"
-                  : "text-gray-400 hover:text-pink-200"
-              }`}
+              className={`w-6 h-6 md:w-7 md:h-7 transition-all duration-300 ${activeTab === "home"
+                ? "text-pink-300 scale-110 drop-shadow-[0_0_8px_rgba(249,168,212,0.6)]"
+                : "text-gray-400 hover:text-pink-200"
+                }`}
             />
             {activeTab === "home" && (
               <span className="absolute -bottom-2 w-1 h-1 bg-pink-300 rounded-full shadow-[0_0_10px_rgba(249,168,212,0.8)]"></span>
@@ -261,11 +261,10 @@ const Avatars = () => {
             className="relative flex flex-col items-center justify-center group"
           >
             <Heart
-              className={`w-6 h-6 md:w-7 md:h-7 transition-all duration-300 ${
-                activeTab === "wishlist"
-                  ? "text-pink-500 fill-pink-500 scale-110 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]"
-                  : "text-gray-400 hover:text-pink-300"
-              }`}
+              className={`w-6 h-6 md:w-7 md:h-7 transition-all duration-300 ${activeTab === "wishlist"
+                ? "text-pink-500 fill-pink-500 scale-110 drop-shadow-[0_0_8px_rgba(236,72,153,0.6)]"
+                : "text-gray-400 hover:text-pink-300"
+                }`}
             />
             {activeTab === "wishlist" && (
               <span className="absolute -bottom-2 w-1 h-1 bg-pink-500 rounded-full shadow-[0_0_10px_rgba(236,72,153,0.8)]"></span>
@@ -290,9 +289,8 @@ const CharacterCard = ({ character, isWishlisted, onToggleWishlist }) => {
         className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/20 flex items-center justify-center backdrop-blur-sm transition-transform active:scale-90 hover:bg-black/40"
       >
         <Heart
-          className={`w-4 h-4 transition-colors ${
-            isWishlisted ? "fill-pink-500 text-pink-500" : "text-gray-300"
-          }`}
+          className={`w-4 h-4 transition-colors ${isWishlisted ? "fill-pink-500 text-pink-500" : "text-gray-300"
+            }`}
         />
       </button>
 
@@ -315,16 +313,25 @@ const CharacterCard = ({ character, isWishlisted, onToggleWishlist }) => {
           </span>
         </div>
         <button
+          disabled={character.isPaid}
           onClick={() => {
-            navigate(`/app/${character.slug}`);
+            if (!character.isPaid) navigate(`/app/${character.slug}`);
           }}
-          className="w-full bg-gradient-to-r from-pink-400 to-purple-500 rounded-full py-1.5 md:py-2 px-4 flex justify-between items-center group/btn hover:shadow-lg hover:shadow-pink-500/25 transition-all"
+          className={`w-full rounded-full py-1.5 px-4 flex justify-between items-center group/btn transition-all
+    ${character.isPaid
+              ? "bg-gray-600 opacity-50 cursor-not-allowed"
+              : "bg-gradient-to-r from-pink-400 to-purple-500 hover:shadow-lg hover:shadow-pink-500/25"
+            }`}
         >
           <span className="text-xs md:text-sm font-bold text-white">
-            Select
+            {character.isPaid ? "Locked" : "Select"}
           </span>
-          <ArrowRight className="w-5 h-5 text-white group-hover/btn:translate-x-1 transition-transform" />
+          <ArrowRight
+            className={`w-5 h-5 text-white transition-transform ${character.isPaid ? "" : "group-hover/btn:translate-x-1"}`}
+          />
         </button>
+
+
       </div>
     </div>
   );
