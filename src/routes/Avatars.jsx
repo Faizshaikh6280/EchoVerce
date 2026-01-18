@@ -38,7 +38,7 @@ const INITIAL_DATA = [
   },
   {
     id: 5,
-    name: "HONEY SINGH",
+    name: "ED SHEERAN",
     category: "Energetic",
     isPaid: false,
     image: "/images/Shinchan.png",
@@ -54,7 +54,7 @@ const INITIAL_DATA = [
   },
   {
     id: 7,
-    name: "ARIJIT SINGH",
+    name: "OGGY",
     category: "Emotional",
     isPaid: false,
     image: "/images/Shinchan.png",
@@ -62,7 +62,7 @@ const INITIAL_DATA = [
   },
   {
     id: 8,
-    name: "OGGY",
+    name: "ARIJIT SINGH",
     category: "Emotional",
     isPaid: true,
     image: "/images/Shinchan.png",
