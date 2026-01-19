@@ -322,7 +322,7 @@ const CharacterCard = ({ character, isWishlisted, onToggleWishlist }) => {
           className={`w-full rounded-full py-1.5 px-4 flex justify-between items-center group/btn transition-all
     ${
       character.isPaid
-        ? "bg-gray-600 opacity-50 cursor-not-allowed"
+        ? "bg-gradient-to-r from-pink-400 to-purple-500 cursor-not-allowed"
         : "bg-gradient-to-r from-pink-400 to-purple-500 hover:shadow-lg hover:shadow-pink-500/25"
     }`}
         >
