@@ -9,7 +9,7 @@ const INITIAL_DATA = [
     name: "SHINCHAN",
     category: "Funny",
     isPaid: false,
-    image: "/images/Shinchan.png",
+    image: "/images/shinchan.png",
     slug: "shinchan",
   },
   {

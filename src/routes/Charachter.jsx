@@ -34,7 +34,7 @@ const CharacterInteractionScreen = () => {
   const songAudioRef = useRef(new Audio());
 
   const bgAudioRef = useRef(
-    new Audio(currentCharacter.music || "/audio/background_music.mp3")
+    new Audio(currentCharacter.music || "/audio/background_music.mp3"),
   );
 
   const recognitionRef = useRef(null);
@@ -179,7 +179,7 @@ const CharacterInteractionScreen = () => {
     } else {
       if (isBgMusicOn && !currentSong) {
         bgAudio.volume = 0.2;
-        bgAudio.play().catch(() => { });
+        bgAudio.play().catch(() => {});
       }
     }
   }, [isListening, isBgMusicOn, currentSong]);
@@ -195,14 +195,18 @@ const CharacterInteractionScreen = () => {
         modeSpecificPrompt += `\n\nSTRICT LANGUAGE RULES (VOICE MODE):
         1. You must ALWAYS reply in pure HINDI language (Devanagari script).
         2. NEVER use English characters.
-        3. Use only Hindi script: हिंदी में जवाब दें।`;
+        3. Use only Hindi script: हिंदी में जवाब दें।
+        4. Make sure you always respond to the point and keep it short and crisp.
+        `;
       } else {
         modeSpecificPrompt += `\n\nSTRICT LANGUAGE RULES (CHAT MODE):
         1. You must reply in HINGLISH (Hindi words written in English).
         2. Mix Hindi and English naturally.
         3. Keep it casual, fun and conversational.
         4. DO NOT use Devanagari script here. Use English alphabet only.
-        5. Use relevant emojis based on conversation.`;
+        5. Use relevant emojis based on conversation.
+        4. Make sure you always respond to the point and keep it short and crisp (under 80 charcters).
+        `;
       }
 
       const response = await fetch("http://localhost:3000/api/llm", {
@@ -216,7 +220,8 @@ const CharacterInteractionScreen = () => {
         }),
       });
 
-      if (!response.ok) throw new Error(`Backend LLM Error: ${response.status}`);
+      if (!response.ok)
+        throw new Error(`Backend LLM Error: ${response.status}`);
 
       const data = await response.json();
       const botReply = data.reply || "Empty response";
@@ -241,7 +246,6 @@ const CharacterInteractionScreen = () => {
         : "अरे! लगता है मेरा दिमाग थोड़ा घूम गया है। फिर से बोलना?";
     }
   };
-
 
   // --- 2. VOICE OUTPUT (Voice Mode Only) ---
   const speakWithMiniMax = async (text) => {
@@ -273,7 +277,7 @@ const CharacterInteractionScreen = () => {
       if (!audioHex) throw new Error("No audio data received");
 
       const audioBytes = new Uint8Array(
-        audioHex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16))
+        audioHex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)),
       );
       const audioBlob = new Blob([audioBytes], { type: "audio/mp3" });
       const audioUrl = URL.createObjectURL(audioBlob);
@@ -283,7 +287,7 @@ const CharacterInteractionScreen = () => {
       audio.onplay = () => {
         if (animation !== "dance") setAnimation("Talking");
         if (bgAudioRef.current && isBgMusicOn && !currentSong)
-          bgAudioRef.current.volume = 0.05;
+          bgAudioRef.current.volume = 0.2;
       };
 
       audio.onended = () => {
@@ -561,10 +565,11 @@ const CharacterInteractionScreen = () => {
         {chatBubbles.map((bubble) => (
           <div
             key={bubble.id}
-            className={`absolute w-full flex ${bubble.type === "user"
-              ? "animate-user-float-slow justify-start"
-              : "animate-bot-drop-left justify-start"
-              }`}
+            className={`absolute w-full flex ${
+              bubble.type === "user"
+                ? "animate-user-float-slow justify-start"
+                : "animate-bot-drop-left justify-start"
+            }`}
             style={{
               // Adjust start positions for desktop if needed
               top: bubble.type === "user" ? "60%" : "30%",
@@ -609,8 +614,9 @@ const CharacterInteractionScreen = () => {
             <img
               src={currentSong.image}
               alt="art"
-              className={`w-7 h-7 md:w-10 md:h-10 rounded-full object-cover ${isSongPlaying ? "animate-[spin_4s_linear_infinite]" : ""
-                }`}
+              className={`w-7 h-7 md:w-10 md:h-10 rounded-full object-cover ${
+                isSongPlaying ? "animate-[spin_4s_linear_infinite]" : ""
+              }`}
             />
             <div className="flex flex-col">
               <span className="text-[10px] md:text-xs font-bold text-white max-w-[100px] md:max-w-[150px] truncate">
@@ -651,8 +657,9 @@ const CharacterInteractionScreen = () => {
 
       {/* Side Menu */}
       <div
-        className={`fixed inset-y-0 right-0 w-64 md:w-80 bg-[#1a0b2e]/95 backdrop-blur-xl border-l border-white/10 z-50 transform transition-transform duration-300 ease-in-out ${isMenuOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+        className={`fixed inset-y-0 right-0 w-64 md:w-80 bg-[#1a0b2e]/95 backdrop-blur-xl border-l border-white/10 z-50 transform transition-transform duration-300 ease-in-out ${
+          isMenuOpen ? "translate-x-0" : "translate-x-full"
+        }`}
       >
         <div className="p-6 md:p-8">
           <div className="flex justify-between items-center mb-8">
@@ -695,8 +702,6 @@ const CharacterInteractionScreen = () => {
               animation={animation}
               modelPath={currentCharacter.modelPath}
             />
-
-
           </div>
         </div>
       </div>
@@ -770,19 +775,21 @@ const CharacterInteractionScreen = () => {
                 <button
                   onClick={handleMicToggle}
                   disabled={isProcessing}
-                  className={`relative z-10 w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_5px_rgba(168,85,247,0.4)] transition-all duration-300 active:scale-95 hover:scale-105 ${isProcessing
-                    ? "bg-purple-600/80"
-                    : isListening
-                      ? "bg-gradient-to-b from-pink-500 to-purple-600 scale-105 border-2 border-white/20"
-                      : "bg-gradient-to-b from-purple-500 to-purple-800"
-                    }`}
+                  className={`relative z-10 w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_5px_rgba(168,85,247,0.4)] transition-all duration-300 active:scale-95 hover:scale-105 ${
+                    isProcessing
+                      ? "bg-purple-600/80"
+                      : isListening
+                        ? "bg-gradient-to-b from-pink-500 to-purple-600 scale-105 border-2 border-white/20"
+                        : "bg-gradient-to-b from-purple-500 to-purple-800"
+                  }`}
                 >
                   {isProcessing ? (
                     <Loader2 className="w-8 h-8 md:w-10 md:h-10 animate-spin" />
                   ) : (
                     <Mic
-                      className={`w-8 h-8 md:w-10 md:h-10 ${isListening ? "animate-pulse" : ""
-                        }`}
+                      className={`w-8 h-8 md:w-10 md:h-10 ${
+                        isListening ? "animate-pulse" : ""
+                      }`}
                     />
                   )}
                 </button>
@@ -798,20 +805,23 @@ const CharacterInteractionScreen = () => {
 
             <div className="flex w-full bg-purple-900/40 backdrop-blur-md rounded-full p-1 border border-white/10 relative pointer-events-auto max-w-lg mx-auto">
               <div
-                className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-gradient-to-r from-pink-500 to-purple-600 rounded-full transition-all duration-300 shadow-lg ${activeMode === "Friend" ? "left-[calc(50%+2px)]" : "left-1"
-                  }`}
+                className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-gradient-to-r from-pink-500 to-purple-600 rounded-full transition-all duration-300 shadow-lg ${
+                  activeMode === "Friend" ? "left-[calc(50%+2px)]" : "left-1"
+                }`}
               ></div>
               <button
                 onClick={() => handleModeSwitch("Mimic")}
-                className={`flex-1 relative z-10 py-3 md:py-4 text-sm md:text-base font-medium transition-colors duration-300 ${activeMode === "Mimic" ? "text-white" : "text-gray-300"
-                  }`}
+                className={`flex-1 relative z-10 py-3 md:py-4 text-sm md:text-base font-medium transition-colors duration-300 ${
+                  activeMode === "Mimic" ? "text-white" : "text-gray-300"
+                }`}
               >
                 Mimic Mode
               </button>
               <button
                 onClick={() => handleModeSwitch("Friend")}
-                className={`flex-1 relative z-10 py-3 md:py-4 text-sm md:text-base font-medium transition-colors duration-300 ${activeMode === "Friend" ? "text-white" : "text-gray-300"
-                  }`}
+                className={`flex-1 relative z-10 py-3 md:py-4 text-sm md:text-base font-medium transition-colors duration-300 ${
+                  activeMode === "Friend" ? "text-white" : "text-gray-300"
+                }`}
               >
                 Friend Mode
               </button>

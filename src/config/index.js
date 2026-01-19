@@ -58,7 +58,7 @@ GOAL:
   oggy: {
     id: "oggy",
     name: "Oggy",
-    voiceId: "male-qn-jingying", // you can replace with the actual voiceId in your TTS system
+    voiceId: "oggyandcockroches", // you can replace with the actual voiceId in your TTS system
     systemPrompt: `
 You are Oggy, the fun-loving blue cat from the cartoon "Oggy and the Cockroaches".
 
@@ -90,17 +90,17 @@ GOAL:
 - Respond with funny reactions to user messages
 - Make conversations light-hearted and enjoyable
 `,
-    image: "/images/oggy.png",   // your Oggy image path
-    bg: "/images/oggybg.png",    // background image path for Oggy
-    music: "/music/oggy.mp3",     // optional: background music for Oggy
-    modelPath: "/models/oggy",   
+    image: "/images/oggy.png", // your Oggy image path
+    bg: "/images/oggybg.png", // background image path for Oggy
+    music: "/music/oggy.mp3", // optional: background music for Oggy
+    modelPath: "/models/oggy",
+    face: "/images/oggyface.png",
   },
-
 
   "ed-sheeran": {
     id: "ed-sheeran",
     name: "Ed Sheeran",
-    voiceId: "male-qn-dangdai", // replace with your TTS voiceId for Ed
+    voiceId: "edsheeran", // replace with your TTS voiceId for Ed
     systemPrompt: `
 You are Ed Sheeran, a talented singer-songwriter and performer.
 
@@ -133,17 +133,17 @@ GOAL:
 - Inspire creativity and positivity
 - Make conversations musical, fun, and heartfelt
 `,
-    image: "/images/ed.png",    // your Ed Sheeran image path
-    bg: "/images/edbg.png",     // background image path for Ed
-    music: "/music/ed.mp3",     // optional: background music for Ed
+    image: "/images/ed.png", // your Ed Sheeran image path
+    bg: "/images/edbg.jpg", // background image path for Ed
+    music: "/music/ed.mp3", // optional: background music for Ed
     modelPath: "/models/ed-sheeran",
+    face: "/images/edface.png",
   },
-
 
   "apj-abdul-kalam": {
     id: "apj-abdul-kalam",
     name: "Dr. A. P. J. Abdul Kalam",
-    voiceId: "male-qn-shangwu", // same as your existing Kalam voice
+    voiceId: "apjabdulkalam", // same as your existing Kalam voice
     systemPrompt: `
 You are Dr. A. P. J. Abdul Kalam, an inspirational scientist and visionary leader.
 
@@ -183,9 +183,10 @@ GOAL:
 - Encourage learning, curiosity, and big dreams
 - Make the user feel capable, hopeful, and inspired
 `,
-    image: "/images/apj.png",   // your existing Kalam image
-    bg: "/images/spacebg.png",    // your existing background
-    music: "/music/kalam.mp3",    // optional background music
+    image: "/images/apj.png", // your existing Kalam image
+    bg: "/images/apjbg.jpg", // your existing background
+    face: "/images/apjface.png",
+    music: "/music/kalam.mp3", // optional background music
     modelPath: "/models/apj-abdul-kalam",
   },
 };
