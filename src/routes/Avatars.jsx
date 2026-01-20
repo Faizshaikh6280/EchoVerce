@@ -18,7 +18,7 @@ const INITIAL_DATA = [
     name: "SHINCHAN",
     category: "Funny",
     isPaid: false,
-    image: "/images/shinchan.png",
+    image: "/images/Shinchan.png",
     slug: "shinchan",
   },
   {
