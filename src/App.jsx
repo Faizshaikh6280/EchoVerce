@@ -189,7 +189,7 @@ export default function App() {
                       few seconds.
                     </p>
                     <div className="mt-2 text-[10px] text-blue-300/80 font-medium bg-blue-500/10 inline-block px-2 py-1 rounded">
-                      ⚡ Roadmap: Custom GPU Servers for instant responses.
+                      ⚡ Future Plan: Custom GPU Servers for instant responses.
                     </div>
                   </div>
                 </div>
@@ -214,6 +214,7 @@ export default function App() {
                         <span className="text-white">Mimic Mode</span> (Repeat).
                       </li>
                       <li>Seamless Voice & Text Interaction.</li>
+                      <li>Dance with your Dream Character.</li>
                     </ul>
                   </div>
                 </div>

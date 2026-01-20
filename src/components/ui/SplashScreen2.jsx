@@ -36,7 +36,7 @@ const SplashScreen2 = () => {
       <div className="flex-grow flex flex-col items-center justify-start pt-2 px-6 pb-12 text-center relative z-10">
         {/* Main Title */}
         <h1 className="font-primary font-light text-white text-3xl sm:text-4xl md:text-5xl font-black mb-4 leading-tight drop-shadow-lg">
-          TALK, SING, & VIBE WITH AI
+          TALK, Dance, & VIBE WITH AI
         </h1>
 
         {/* Subtitle */}
