@@ -1,5 +1,14 @@
 import React, { useState, useMemo } from "react";
-import { Search, Heart, Home, ArrowRight, Ghost } from "lucide-react";
+// Added 'Play' and 'Video' to imports
+import {
+  Search,
+  Heart,
+  Home,
+  ArrowRight,
+  Ghost,
+  Play,
+  Sparkles,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 // --- MOCK DATA ---
@@ -9,7 +18,7 @@ const INITIAL_DATA = [
     name: "SHINCHAN",
     category: "Funny",
     isPaid: false,
-    image: "/images/Shinchan.png",
+    image: "/images/shinchan.png",
     slug: "shinchan",
   },
   {
@@ -73,7 +82,7 @@ const INITIAL_DATA = [
 const FILTERS = ["All", "Funny", "Calm", "Emotional", "Energetic", "Angry"];
 
 const Avatars = () => {
-  const [activeTab, setActiveTab] = useState("home"); // 'home' or 'wishlist'
+  const [activeTab, setActiveTab] = useState("home");
   const [activeFilter, setActiveFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [wishlist, setWishlist] = useState([]);
@@ -101,9 +110,7 @@ const Avatars = () => {
   // 2. Filter Logic for WISHLIST TAB
   const wishlistData = useMemo(() => {
     return INITIAL_DATA.filter((item) => {
-      // Only show items that are in the wishlist array
       const isInWishlist = wishlist.includes(item.id);
-      // Optional: Allow searching within wishlist too
       const matchesSearch = item.name
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
@@ -111,9 +118,13 @@ const Avatars = () => {
     });
   }, [searchQuery, wishlist]);
 
-  // 3. Grouping Logic (Only needed for Home Tab)
+  // 3. Grouping Logic
   const groupedHomeData = useMemo(() => {
-    if (activeFilter !== "All") return { [activeFilter]: homeData };
+    if (activeFilter !== "All") {
+      // If filter is active but no data, return empty object
+      if (homeData.length === 0) return {};
+      return { [activeFilter]: homeData };
+    }
 
     return homeData.reduce((acc, item) => {
       if (!acc[item.category]) acc[item.category] = [];
@@ -124,7 +135,7 @@ const Avatars = () => {
 
   return (
     <div className="min-h-screen bg-[#1a0b2e] text-white font-sans pb-24 overflow-x-hidden relative">
-      {/* --- HEADER WRAPPER FOR DESKTOP CENTERING --- */}
+      {/* --- HEADER WRAPPER --- */}
       <div className="sticky top-0 z-20 bg-[#1a0b2e]">
         <div className="pt-6 px-4 pb-2 max-w-7xl mx-auto w-full">
           <div className="relative mb-6 max-w-2xl mx-auto">
@@ -142,13 +153,11 @@ const Avatars = () => {
             <Search className="absolute right-4 top-3.5 text-gray-400 w-5 h-5" />
           </div>
 
-          {/* Show Filters only on Home Tab */}
           {activeTab === "home" ? (
             <>
               <h1 className="text-xl md:text-3xl text-center font-black mb-6 tracking-wide font-light text-accent uppercase font-primary">
                 Pick one that matches your mood!
               </h1>
-              {/* Filter Pills Container - Optimized for Desktop */}
               <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 touch-pan-x md:justify-center md:flex-wrap">
                 {FILTERS.map((filter) => (
                   <button
@@ -173,13 +182,36 @@ const Avatars = () => {
         </div>
       </div>
 
-      {/* --- CONTENT AREA WRAPPER --- */}
+      {/* --- CONTENT AREA --- */}
       <div className="px-4 space-y-8 mt-4 max-w-7xl mx-auto w-full">
         {/* VIEW: HOME TAB */}
         {activeTab === "home" &&
           (Object.keys(groupedHomeData).length === 0 ? (
-            <div className="text-center text-gray-500 mt-20 text-lg">
-              No partners found matching your search.
+            /* --- BEAUTIFUL NO MODEL FOUND MESSAGE --- */
+            <div className="flex flex-col items-center justify-center mt-12 animate-fade-in text-center p-6 border border-white/5 rounded-3xl bg-white/5 backdrop-blur-sm">
+              <div className="relative mb-4">
+                <div className="absolute inset-0 bg-purple-500 blur-2xl opacity-20 animate-pulse"></div>
+                <Ghost className="w-16 h-16 text-purple-300 relative z-10 opacity-80" />
+                <Sparkles className="w-6 h-6 text-yellow-400 absolute -top-2 -right-2 animate-bounce" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                It's quiet in here...
+              </h3>
+              <p className="text-gray-400 max-w-xs mx-auto text-sm leading-relaxed">
+                No partners found for{" "}
+                <span className="text-pink-400 font-bold">
+                  "{activeFilter}"
+                </span>
+                .
+                <br />
+                Try switching the filter or search for someone else!
+              </p>
+              <button
+                onClick={() => setActiveFilter("All")}
+                className="mt-6 px-6 py-2 bg-white/10 hover:bg-white/20 rounded-full text-sm font-medium transition-colors border border-white/10"
+              >
+                Clear Filters
+              </button>
             </div>
           ) : (
             Object.entries(groupedHomeData).map(([category, items]) => (
@@ -190,7 +222,6 @@ const Avatars = () => {
                   </h2>
                 </div>
 
-                {/* RESPONSIVE GRID LAYOUT  */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                   {items.map((character) => (
                     <CharacterCard
@@ -226,7 +257,7 @@ const Avatars = () => {
                 <CharacterCard
                   key={character.id}
                   character={character}
-                  isWishlisted={true} // Always true in wishlist view
+                  isWishlisted={true}
                   onToggleWishlist={() => toggleWishlist(character.id)}
                 />
               ))}
@@ -234,8 +265,28 @@ const Avatars = () => {
           ))}
       </div>
 
+      {/* --- FLOATING VIDEO BUTTON (Updated) --- */}
+      <a
+        href="YOUR_DEMO_VIDEO_LINK_HERE" // <--- REPLACE THIS LINK
+        target="_blank"
+        rel="noopener noreferrer"
+        // Updated classes for a Pill shape instead of circle
+        className="fixed bottom-24 right-4 z-50 group md:bottom-10 md:right-8"
+        title="Watch Demo"
+      >
+        {/* Glow Effect */}
+        <div className="absolute inset-0 rounded-full bg-red-500 blur-md opacity-40 group-hover:opacity-80 animate-pulse"></div>
+
+        {/* The Button */}
+        <div className="relative px-4 py-3 bg-gradient-to-r from-red-500 to-pink-600 rounded-full flex items-center gap-2 shadow-2xl border border-white/20 transition-transform transform group-hover:scale-105 active:scale-95">
+          <Play className="w-4 h-4 text-white fill-white" />
+          <span className="text-white text-sm font-bold whitespace-nowrap">
+            Video Demo
+          </span>
+        </div>
+      </a>
+
       {/* --- BOTTOM NAV --- */}
-      {/* Centered floating navigation */}
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-30 w-full flex justify-center pointer-events-none">
         <div className="bg-[#2d0f41]/30 backdrop-blur-xl border border-white/20 rounded-2xl px-10 py-3 flex gap-12 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] pointer-events-auto hover:bg-[#2d0f41]/50 transition-colors">
           {/* Home Icon */}
@@ -277,7 +328,7 @@ const Avatars = () => {
   );
 };
 
-// --- INDIVIDUAL CARD COMPONENT (Reused) ---
+// --- INDIVIDUAL CARD COMPONENT ---
 const CharacterCard = ({ character, isWishlisted, onToggleWishlist }) => {
   const navigate = useNavigate();
   return (
@@ -319,10 +370,10 @@ const CharacterCard = ({ character, isWishlisted, onToggleWishlist }) => {
           onClick={() => {
             if (!character.isPaid) navigate(`/app/${character.slug}`);
           }}
-          className={`w-full rounded-full py-1.5 px-4 flex justify-between items-center group/btn transition-all
+          className={`w-full rounded-full py-1.5 md:py-2 px-4 flex justify-between items-center group/btn transition-all
     ${
       character.isPaid
-        ? "bg-gradient-to-r from-pink-400 to-purple-500 cursor-not-allowed"
+        ? "bg-gradient-to-r from-pink-400 to-purple-500 cursor-not-allowed opacity-70"
         : "bg-gradient-to-r from-pink-400 to-purple-500 hover:shadow-lg hover:shadow-pink-500/25"
     }`}
         >
@@ -330,7 +381,9 @@ const CharacterCard = ({ character, isWishlisted, onToggleWishlist }) => {
             {character.isPaid ? "Locked" : "Select"}
           </span>
           <ArrowRight
-            className={`w-5 h-5 text-white transition-transform ${character.isPaid ? "" : "group-hover/btn:translate-x-1"}`}
+            className={`w-5 h-5 text-white transition-transform ${
+              character.isPaid ? "" : "group-hover/btn:translate-x-1"
+            }`}
           />
         </button>
       </div>

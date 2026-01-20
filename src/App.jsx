@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import {
   Smartphone,
@@ -8,13 +8,71 @@ import {
   Zap,
   PlayCircle,
   MessageSquareHeart,
+  Loader2,
+  Bot,
 } from "lucide-react";
-import Home from "./routes/Home.jsx";
-import Avatars from "./routes/Avatars.jsx";
-import Charachter from "./routes/Charachter.jsx";
+
+// --- LAZY LOADED ROUTES ---
+// This ensures the browser only downloads the code needed for the current page
+const Home = lazy(() => import("./routes/Home.jsx"));
+const Avatars = lazy(() => import("./routes/Avatars.jsx"));
+const Charachter = lazy(() => import("./routes/Charachter.jsx"));
+
+// --- WITTY LOADING MESSAGES ---
+const LOADING_JOKES = [
+  "Teaching Shinchan new pickup lines... 😜",
+  "Convincing the AI not to take over the world... 🌍",
+  "Downloading sense of humor... 100% 😂",
+  "Waking up the avatars... 😴",
+  "Tuning the vocal cords... 🎤",
+  "Generating charisma... ✨",
+  "Feeding the server hamsters... 🐹",
+  "Polishing the pixels... 💎",
+];
+
+// --- BEAUTIFUL LOADER COMPONENT ---
+const FullPageLoader = () => {
+  const [message, setMessage] = useState(LOADING_JOKES[0]);
+
+  useEffect(() => {
+    // Cycle through messages every 2 seconds to keep it fun
+    const interval = setInterval(() => {
+      const randomIndex = Math.floor(Math.random() * LOADING_JOKES.length);
+      setMessage(LOADING_JOKES[randomIndex]);
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="fixed inset-0 bg-[#1a0b2e] flex flex-col items-center justify-center z-50">
+      {/* Animated Icon Container */}
+      <div className="relative mb-8">
+        {/* Outer Glow */}
+        <div className="absolute inset-0 bg-purple-500 blur-2xl opacity-30 animate-pulse"></div>
+        {/* Spinner Ring */}
+        <div className="w-20 h-20 border-4 border-purple-500/30 border-t-purple-400 rounded-full animate-spin absolute inset-0"></div>
+        {/* Center Icon */}
+        <div className="w-20 h-20 flex items-center justify-center relative z-10">
+          <Bot className="w-8 h-8 text-white animate-bounce" />
+        </div>
+      </div>
+
+      {/* Loading Text */}
+      <h2 className="text-xl font-bold text-white mb-2 tracking-wide animate-pulse">
+        Loading EchoVerse...
+      </h2>
+
+      {/* Dynamic Joke */}
+      <p className="text-purple-300/80 text-sm font-medium text-center px-6 min-h-[20px] transition-all duration-300">
+        {message}
+      </p>
+    </div>
+  );
+};
 
 export default function App() {
-  const location = useLocation(); // Hook to detect route changes
+  const location = useLocation();
 
   // 1. Mobile Check State
   const [isLargeScreen, setIsLargeScreen] = useState(false);
@@ -33,13 +91,10 @@ export default function App() {
     window.addEventListener("resize", checkScreenSize);
 
     // --- CHECK FOR JUDGES MODAL TRIGGER ---
-    // Condition: On '/app' route AND hasn't seen intro AND is on mobile
     if (location.pathname.startsWith("/app")) {
       const hasSeenIntro = sessionStorage.getItem("hasSeenJudgesIntro");
 
-      // Only show if not seen before (sessionStorage clears when tab closes)
       if (!hasSeenIntro) {
-        // Small delay to let the page load visually first
         setTimeout(() => {
           setShowJudgesModal(true);
         }, 500);
@@ -47,11 +102,11 @@ export default function App() {
     }
 
     return () => window.removeEventListener("resize", checkScreenSize);
-  }, [location.pathname]); // Re-run logic when path changes
+  }, [location.pathname]);
 
   const handleCloseJudgesModal = () => {
     setShowJudgesModal(false);
-    sessionStorage.setItem("hasSeenJudgesIntro", "true"); // Mark as seen
+    sessionStorage.setItem("hasSeenJudgesIntro", "true");
   };
 
   return (
@@ -97,12 +152,9 @@ export default function App() {
       {showJudgesModal && !isLargeScreen && (
         <div className="fixed inset-0 z-[9000] bg-[#0f0518]/90 backdrop-blur-md flex items-center justify-center p-4 animate-in zoom-in-95 duration-500">
           <div className="bg-gradient-to-b from-[#1a0b2e] to-[#0f0518] border border-white/10 w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden relative">
-            {/* Background Glow */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-32 bg-purple-500/20 blur-[60px] pointer-events-none"></div>
 
-            {/* Scrollable Content */}
             <div className="p-6 relative z-10 max-h-[85vh] overflow-y-auto no-scrollbar">
-              {/* Header */}
               <div className="text-center mb-6">
                 <div className="inline-flex items-center justify-center p-3 bg-purple-500/10 rounded-2xl mb-4 border border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
                   <Sparkles className="w-8 h-8 text-purple-400 animate-pulse" />
@@ -119,7 +171,6 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Note 1: Architecture & Latency */}
               <div className="bg-white/5 border border-white/5 rounded-xl p-4 mb-4">
                 <div className="flex items-start gap-3">
                   <Cpu className="w-5 h-5 text-blue-400 mt-1 flex-shrink-0" />
@@ -142,7 +193,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Note 2: Features */}
               <div className="bg-white/5 border border-white/5 rounded-xl p-4 mb-6">
                 <div className="flex items-start gap-3">
                   <MessageSquareHeart className="w-5 h-5 text-pink-400 mt-1 flex-shrink-0" />
@@ -167,7 +217,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Demo Video Link */}
               <div className="mb-6 text-center">
                 <p className="text-gray-500 text-[10px] mb-2">
                   Network issues? Watch the live demo:
@@ -185,7 +234,6 @@ export default function App() {
                 </a>
               </div>
 
-              {/* Start Button */}
               <button
                 onClick={handleCloseJudgesModal}
                 className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl text-white font-bold text-lg shadow-[0_0_20px_rgba(236,72,153,0.4)] hover:shadow-[0_0_30px_rgba(236,72,153,0.6)] active:scale-95 transition-all flex items-center justify-center gap-2"
@@ -198,12 +246,15 @@ export default function App() {
         </div>
       )}
 
-      {/* --- ROUTES --- */}
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/app" element={<Avatars />} />
-        <Route path="/app/:slug" element={<Charachter />} />
-      </Routes>
+      {/* --- SUSPENSE WRAPPER FOR LAZY LOADING --- */}
+      {/* This renders the FullPageLoader while components are being fetched */}
+      <Suspense fallback={<FullPageLoader />}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/app" element={<Avatars />} />
+          <Route path="/app/:slug" element={<Charachter />} />
+        </Routes>
+      </Suspense>
     </>
   );
 }
