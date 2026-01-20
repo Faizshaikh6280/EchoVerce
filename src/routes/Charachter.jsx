@@ -681,10 +681,9 @@ const CharacterInteractionScreen = () => {
           className="absolute bottom-0 w-full flex justify-center pointer-events-auto transition-transform duration-500 ease-in-out"
           style={{
             transform: `translate(${avatarPosition.x}px, ${avatarPosition.y}px)`,
-            cursor: isDragging ? "grabbing" : "grab",
           }}
-          onMouseDown={handleDragStart}
-          onTouchStart={handleDragStart}
+          // onMouseDown={handleDragStart}
+          // onTouchStart={handleDragStart}
         >
           <div className="w-[90vw] h-[520px] max-w-[420px] md:max-w-[600px] md:h-[70vh] md:w-auto relative overflow-visible bg-transparent">
             <div className="absolute top-0 right-0 bg-white/20 p-1 rounded-full text-white/50 hover:text-white hover:bg-white/40 transition-colors">
