@@ -19,26 +19,28 @@ const Avatars = lazy(() => import("./routes/Avatars.jsx"));
 const Charachter = lazy(() => import("./routes/Charachter.jsx"));
 
 // --- WITTY LOADING MESSAGES ---
-const LOADING_JOKES = [
-  "Teaching Shinchan new pickup lines... 😜",
-  "Convincing the AI not to take over the world... 🌍",
-  "Downloading sense of humor... 100% 😂",
-  "Waking up the avatars... 😴",
-  "Tuning the vocal cords... 🎤",
-  "Generating charisma... ✨",
-  "Feeding the server hamsters... 🐹",
-  "Polishing the pixels... 💎",
+const LOADING_MESSAGES = [
+  "Shinchan is hiding the remote... 📺",
+  "Fact: The first AI chatbot, ELIZA, was born in 1966! 📜",
+  "Tuning the autotune for the AI... 🎤",
+  "Fact: AI can now clone a voice with just 3 seconds of audio! 🗣️",
+  "Downloading 1TB of pure attitude... 💅",
+  "Fact: The term 'Artificial Intelligence' was coined in 1956. 🎓",
+  "Asking the AI to be nice to you today... 🤞",
+  "Fact: AI processes information 100,000x faster than neurons! 🧠",
+  "Generating main character energy... ✨",
+  "Connecting you to the neural network... 🌐",
 ];
 
 // --- BEAUTIFUL LOADER COMPONENT ---
 const FullPageLoader = () => {
-  const [message, setMessage] = useState(LOADING_JOKES[0]);
+  const [message, setMessage] = useState(LOADING_MESSAGES[0]);
 
   useEffect(() => {
     // Cycle through messages every 2 seconds to keep it fun
     const interval = setInterval(() => {
-      const randomIndex = Math.floor(Math.random() * LOADING_JOKES.length);
-      setMessage(LOADING_JOKES[randomIndex]);
+      const randomIndex = Math.floor(Math.random() * LOADING_MESSAGES.length);
+      setMessage(LOADING_MESSAGES[randomIndex]);
     }, 2000);
 
     return () => clearInterval(interval);
