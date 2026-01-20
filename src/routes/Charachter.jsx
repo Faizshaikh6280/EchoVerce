@@ -585,7 +585,7 @@ const CharacterInteractionScreen = () => {
             ) : (
               <div className="flex items-start gap-2 md:gap-4">
                 <img
-                  src={currentCharacter.image}
+                  src={currentCharacter.face}
                   alt="avatar"
                   className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-yellow-400 shadow-xl object-cover bg-white"
                 />
