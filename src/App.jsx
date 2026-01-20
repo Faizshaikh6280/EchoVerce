@@ -24,7 +24,7 @@ const LOADING_MESSAGES = [
   "Fact: The first AI chatbot, ELIZA, was born in 1966! 📜",
   "Tuning the autotune for the AI... 🎤",
   "Fact: AI can now clone a voice with just 3 seconds of audio! 🗣️",
-  "Downloading 1TB of pure attitude... 💅",
+  "Downloading 1MB of pure attitude... 💅",
   "Fact: The term 'Artificial Intelligence' was coined in 1956. 🎓",
   "Asking the AI to be nice to you today... 🤞",
   "Fact: AI processes information 100,000x faster than neurons! 🧠",
