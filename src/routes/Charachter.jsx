@@ -65,6 +65,8 @@ const CharacterInteractionScreen = () => {
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
 
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
   // --- 0. CRITICAL: CLEANUP ON UNMOUNT (Solves the issue) ---
   useEffect(() => {
     // This runs only once when component mounts
@@ -202,7 +204,7 @@ const CharacterInteractionScreen = () => {
 
       if (isVoiceMode) {
         modeSpecificPrompt += `\n\nSTRICT LANGUAGE RULES (VOICE MODE):
-        1. You must ALWAYS reply in pure HINDI language (Devanagari script).
+        1. You must ALWAYS reply in  HINDI language (Devanagari script).
         2. NEVER use English characters.
         3. Use only Hindi script: हिंदी में जवाब दें।
         4. Make sure you always respond to the point and keep it short and crisp.`;
@@ -216,7 +218,7 @@ const CharacterInteractionScreen = () => {
         4. Make sure you always respond to the point and keep it short and crisp (under 80 charcters).`;
       }
 
-      const response = await fetch("http://localhost:3000/api/llm", {
+      const response = await fetch(`${API_URL}/api/llm`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -269,7 +271,7 @@ const CharacterInteractionScreen = () => {
     console.log("🔊 Requesting Audio for:", text);
 
     try {
-      const response = await fetch("http://localhost:3000/api/speak", {
+      const response = await fetch(`${API_URL}/api/speak`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: text, voiceId: currentCharacter.voiceId }),
