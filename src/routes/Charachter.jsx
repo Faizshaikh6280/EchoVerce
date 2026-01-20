@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import CharacterModel from "../components/CharacterModel";
-import { Toaster } from "react-hot-toast"; // ADD THIS
-import { showErrorToast } from "../utils/toast"; // ADD THIS
+import { Toaster } from "react-hot-toast";
+import { showErrorToast } from "../utils/toast";
 
 import {
   ChevronLeft,
@@ -33,6 +33,7 @@ const CharacterInteractionScreen = () => {
   const audioRef = useRef(new Audio());
   const songAudioRef = useRef(new Audio());
 
+  // Initialize BG Audio
   const bgAudioRef = useRef(
     new Audio(currentCharacter.music || "/audio/background_music.mp3"),
   );
@@ -64,7 +65,28 @@ const CharacterInteractionScreen = () => {
   const [isDragging, setIsDragging] = useState(false);
   const dragStartPos = useRef({ x: 0, y: 0 });
 
-  // --- 0. THREAD & MUSIC MANAGEMENT ---
+  // --- 0. CRITICAL: CLEANUP ON UNMOUNT (Solves the issue) ---
+  useEffect(() => {
+    // This runs only once when component mounts
+    return () => {
+      // This runs immediately when component unmounts
+      console.log("🔇 Component Unmounting: Killing Background Music");
+      if (bgAudioRef.current) {
+        bgAudioRef.current.pause();
+        bgAudioRef.current.currentTime = 0;
+      }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      if (songAudioRef.current) {
+        songAudioRef.current.pause();
+        songAudioRef.current.currentTime = 0;
+      }
+    };
+  }, []);
+
+  // --- 1. THREAD & MUSIC MANAGEMENT ---
   useEffect(() => {
     stopListening();
     stopSong();
@@ -73,13 +95,16 @@ const CharacterInteractionScreen = () => {
     setIsProcessing(false);
     console.log(`Switched to new thread for: ${currentCharacter.name}`);
 
+    // Stop previous audio immediately when model changes
     if (bgAudioRef.current) {
       bgAudioRef.current.pause();
+      // Load new track
       bgAudioRef.current.src =
         currentCharacter.music || "/audio/background_music.mp3";
       bgAudioRef.current.volume = 0.2;
       bgAudioRef.current.loop = true;
 
+      // Start playing new track if music is enabled
       if (isBgMusicOn) {
         bgAudioRef.current.play().catch((error) => {
           console.warn("Autoplay prevented on switch:", error);
@@ -88,39 +113,39 @@ const CharacterInteractionScreen = () => {
     }
   }, [activeCharId, currentCharacter.name, currentCharacter.music]);
 
+  // --- 2. INTELLIGENT VOLUME MANAGER ---
+  useEffect(() => {
+    const bgAudio = bgAudioRef.current;
+    if (!bgAudio) return;
+
+    const ensurePlaying = () => {
+      if (bgAudio.paused && isBgMusicOn && !currentSong) {
+        bgAudio.play().catch(() => {});
+      }
+    };
+
+    if (!isBgMusicOn || currentSong) {
+      bgAudio.pause();
+    } else if (isListening || animation === "Talking") {
+      // Lower volume when speaking or listening, don't stop it
+      bgAudio.volume = 0.05;
+      ensurePlaying();
+    } else {
+      // Normal volume otherwise
+      bgAudio.volume = 0.2;
+      ensurePlaying();
+    }
+  }, [isListening, animation, isBgMusicOn, currentSong]);
+
   // --- AUTO POSITION SHIFT ON CHAT MODE ---
   useEffect(() => {
-    // Only shift automatically on mobile/smaller screens where space is tight
     const isMobile = window.innerWidth < 768;
-
     if (isChatMode) {
-      // Shift right when chat opens to clear the left side for bubbles
       setAvatarPosition((prev) => ({ ...prev, x: isMobile ? 100 : 200 }));
     } else {
-      // Center when chat closes
       setAvatarPosition((prev) => ({ ...prev, x: 0 }));
     }
   }, [isChatMode]);
-
-  // --- AUTO-PLAY BACKGROUND MUSIC ---
-  useEffect(() => {
-    const bgAudio = bgAudioRef.current;
-    bgAudio.loop = true;
-
-    if (isBgMusicOn) {
-      bgAudio.volume = 0.2;
-      bgAudio.play().catch((error) => {
-        console.warn("Autoplay prevented (Interact with page first):", error);
-      });
-    } else {
-      bgAudio.pause();
-    }
-
-    return () => {
-      bgAudio.pause();
-      bgAudio.currentTime = 0;
-    };
-  }, [isBgMusicOn]);
 
   // --- DRAG HANDLERS ---
   const handleDragStart = (e) => {
@@ -168,23 +193,7 @@ const CharacterInteractionScreen = () => {
     };
   }, [isDragging]);
 
-  // --- 1. INTELLIGENCE (Gemini LLM) ---
-  // Top-level useEffect to handle BG music pause/play based on mic
-  useEffect(() => {
-    const bgAudio = bgAudioRef.current;
-    if (!bgAudio) return;
-
-    if (isListening) {
-      bgAudio.pause(); // stop music immediately
-    } else {
-      if (isBgMusicOn && !currentSong) {
-        bgAudio.volume = 0.2;
-        bgAudio.play().catch(() => {});
-      }
-    }
-  }, [isListening, isBgMusicOn, currentSong]);
-
-  // Single fetchLLMResponse function
+  // --- 3. INTELLIGENCE (Gemini LLM) ---
   const fetchLLMResponse = async (userText, isVoiceMode = true) => {
     try {
       console.log(`📤 Sending to Gemini (${currentCharacter.name}):`, userText);
@@ -196,8 +205,7 @@ const CharacterInteractionScreen = () => {
         1. You must ALWAYS reply in pure HINDI language (Devanagari script).
         2. NEVER use English characters.
         3. Use only Hindi script: हिंदी में जवाब दें।
-        4. Make sure you always respond to the point and keep it short and crisp.
-        `;
+        4. Make sure you always respond to the point and keep it short and crisp.`;
       } else {
         modeSpecificPrompt += `\n\nSTRICT LANGUAGE RULES (CHAT MODE):
         1. You must reply in HINGLISH (Hindi words written in English).
@@ -205,8 +213,7 @@ const CharacterInteractionScreen = () => {
         3. Keep it casual, fun and conversational.
         4. DO NOT use Devanagari script here. Use English alphabet only.
         5. Use relevant emojis based on conversation.
-        4. Make sure you always respond to the point and keep it short and crisp (under 80 charcters).
-        `;
+        4. Make sure you always respond to the point and keep it short and crisp (under 80 charcters).`;
       }
 
       const response = await fetch("http://localhost:3000/api/llm", {
@@ -234,7 +241,7 @@ const CharacterInteractionScreen = () => {
           { role: "user", content: userText },
           { role: "assistant", content: botReply },
         ];
-        return newHistory.slice(-20); // Keep last 20 messages
+        return newHistory.slice(-20);
       });
 
       return botReply;
@@ -247,7 +254,7 @@ const CharacterInteractionScreen = () => {
     }
   };
 
-  // --- 2. VOICE OUTPUT (Voice Mode Only) ---
+  // --- 4. VOICE OUTPUT ---
   const speakWithMiniMax = async (text) => {
     if (!text) return;
 
@@ -256,6 +263,7 @@ const CharacterInteractionScreen = () => {
       audio.pause();
       audio.currentTime = 0;
     }
+    // Set idle initially, onplay will switch to Talking
     if (animation !== "dance") setAnimation("idle");
 
     console.log("🔊 Requesting Audio for:", text);
@@ -284,34 +292,20 @@ const CharacterInteractionScreen = () => {
 
       audio.src = audioUrl;
 
+      // Animation control based on audio events
       audio.onplay = () => {
         if (animation !== "dance") setAnimation("Talking");
-        if (bgAudioRef.current && isBgMusicOn && !currentSong)
-          bgAudioRef.current.volume = 0.2;
+        // Volume ducking handled by central useEffect
       };
 
       audio.onended = () => {
         if (animation !== "dance") setAnimation("idle");
-        if (bgAudioRef.current && isBgMusicOn && !currentSong)
-          bgAudioRef.current.volume = 0.2;
-        console.log("⏹️ Finished.");
-        setAnimation("idle"); // <--- FORCE ANIMATION OFF
-
-        // --- NEW: Restore BG Music Volume ---
-        if (bgAudioRef.current && isBgMusicOn) {
-          bgAudioRef.current.volume = 0.2; // Restore to 20% volume
-        }
+        // Volume restore handled by central useEffect
       };
 
       audio.onerror = (e) => {
         console.error("Audio Playback Error", e);
         if (animation !== "dance") setAnimation("idle");
-        if (bgAudioRef.current && isBgMusicOn && !currentSong)
-          bgAudioRef.current.volume = 0.2;
-        setAnimation("idle");
-        // Restore volume if error occurs
-        if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
-        // ADD TOAST FOR AUDIO PLAYBACK ERROR
         showErrorToast("Audio playback failed. Please try again.");
       };
 
@@ -319,17 +313,11 @@ const CharacterInteractionScreen = () => {
     } catch (error) {
       console.error("❌ TTS Failed:", error.message);
       if (animation !== "dance") setAnimation("idle");
-      if (bgAudioRef.current && isBgMusicOn && !currentSong)
-        bgAudioRef.current.volume = 0.2;
-      setAnimation("idle");
-      // REPLACE ALERT WITH TOAST
       showErrorToast(`Voice generation failed: ${error.message}`);
-
-      if (bgAudioRef.current && isBgMusicOn) bgAudioRef.current.volume = 0.2;
     }
   };
 
-  // --- 3. SPEECH RECOGNITION ---
+  // --- 5. SPEECH RECOGNITION ---
   const startListening = () => {
     if (!("webkitSpeechRecognition" in window)) {
       showErrorToast("Please use Google Chrome for voice recognition.");
@@ -355,6 +343,8 @@ const CharacterInteractionScreen = () => {
 
     recognition.onstart = () => {
       setIsListening(true);
+      // NOTE: Animation will switch to 'listen'.
+      // NOTE: Music volume will drop via useEffect because isListening is true.
       if (animation !== "dance") setAnimation("listen");
       resetSilenceTimer();
     };
@@ -377,7 +367,6 @@ const CharacterInteractionScreen = () => {
       }
       setIsListening(false);
       if (animation !== "dance") setAnimation("idle");
-      setAnimation("idle");
       if (silenceTimer.current) clearTimeout(silenceTimer.current);
     };
 
@@ -397,8 +386,7 @@ const CharacterInteractionScreen = () => {
           await speakWithMiniMax(finalFullText);
         }
       } else {
-        // No text captured
-        setAnimation("idle");
+        if (animation !== "dance") setAnimation("idle");
       }
     };
 
@@ -435,7 +423,6 @@ const CharacterInteractionScreen = () => {
     const userMessage = chatMessage;
     const userBubbleId = Date.now();
 
-    // 1. Show User Bubble
     setChatBubbles((prev) => [
       ...prev,
       { id: userBubbleId, type: "user", text: userMessage },
@@ -444,11 +431,9 @@ const CharacterInteractionScreen = () => {
     setChatMessage("");
     setIsProcessing(true);
 
-    // 2. Fetch Response
     const reply = await fetchLLMResponse(userMessage, false);
     setIsProcessing(false);
 
-    // 3. Remove User Bubble, Show Bot Bubble (Wait a tiny bit for transition)
     setChatBubbles((prev) => prev.filter((b) => b.id !== userBubbleId));
 
     const botBubbleId = Date.now() + 1;
@@ -457,7 +442,6 @@ const CharacterInteractionScreen = () => {
       { id: botBubbleId, type: "bot", text: reply },
     ]);
 
-    // 4. Fade out bot bubble after 8 seconds
     setTimeout(() => {
       setChatBubbles((prev) => prev.filter((b) => b.id !== botBubbleId));
     }, 15000);
@@ -478,7 +462,6 @@ const CharacterInteractionScreen = () => {
     setIsListening(false);
     if (recognitionRef.current) recognitionRef.current.stop();
     setShowSongList(false);
-    if (animation !== "dance") setAnimation("idle");
     if (bgAudioRef.current) bgAudioRef.current.pause();
 
     setAnimation("dance");
@@ -534,6 +517,17 @@ const CharacterInteractionScreen = () => {
   const handleBack = () => navigate(-1);
   const toggleBgMusic = () => setIsBgMusicOn((prev) => !prev);
 
+  // --- MEMOIZED CHARACTER MODEL (Prevents Reloading) ---
+  const MemoizedCharacterModel = useMemo(() => {
+    return (
+      <CharacterModel
+        animation={animation}
+        image={currentCharacter.image}
+        modelPath={currentCharacter.modelPath}
+      />
+    );
+  }, [animation, currentCharacter.image, currentCharacter.modelPath]);
+
   return (
     <div className="min-h-screen w-full relative overflow-hidden font-sans bg-black">
       <Toaster />
@@ -544,7 +538,7 @@ const CharacterInteractionScreen = () => {
         style={{ backgroundImage: `url('${currentCharacter.bg}')` }}
       />
 
-      {/* Navigation - Responsive Padding */}
+      {/* Navigation */}
       <div className="absolute top-0 left-0 w-full flex justify-between items-center p-6 md:p-8 pt-12 z-20 pointer-events-none">
         <button
           onClick={handleBack}
@@ -560,7 +554,7 @@ const CharacterInteractionScreen = () => {
         </button>
       </div>
 
-      {/* CHAT BUBBLES CONTAINER (Left Side Zone - Responsive Width) */}
+      {/* Chat Bubbles */}
       <div className="absolute top-0 left-0 h-full w-[65%] md:w-[50%] lg:w-[45%] z-25 pointer-events-none overflow-hidden pl-4 md:pl-12">
         {chatBubbles.map((bubble) => (
           <div
@@ -571,13 +565,11 @@ const CharacterInteractionScreen = () => {
                 : "animate-bot-drop-left justify-start"
             }`}
             style={{
-              // Adjust start positions for desktop if needed
               top: bubble.type === "user" ? "60%" : "30%",
               paddingBottom: "20px",
             }}
           >
             {bubble.type === "user" ? (
-              /* --- USER BUBBLE --- */
               <div className="flex items-center gap-2 md:gap-4">
                 <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-500 flex items-center justify-center border-2 border-white/50 shadow-md">
                   <User className="w-6 h-6 md:w-7 md:h-7 text-white" />
@@ -589,10 +581,9 @@ const CharacterInteractionScreen = () => {
                 </div>
               </div>
             ) : (
-              /* --- BOT BUBBLE --- */
               <div className="flex items-start gap-2 md:gap-4">
                 <img
-                  src={currentCharacter.face}
+                  src={currentCharacter.image}
                   alt="avatar"
                   className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-yellow-400 shadow-xl object-cover bg-white"
                 />
@@ -607,7 +598,7 @@ const CharacterInteractionScreen = () => {
         ))}
       </div>
 
-      {/* Song Player Widget - Responsive Position */}
+      {/* Song Player */}
       {currentSong && (
         <div className="absolute top-24 md:top-28 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto">
           <div className="px-3 py-1.5 md:px-5 md:py-3 bg-black/70 backdrop-blur-md rounded-full border border-pink-500/30 flex items-center gap-2 md:gap-4 shadow-lg">
@@ -643,7 +634,7 @@ const CharacterInteractionScreen = () => {
         </div>
       )}
 
-      {/* Bg Music Toggle - Responsive Position */}
+      {/* Bg Music Toggle */}
       <button
         onClick={toggleBgMusic}
         className="absolute top-35 md:top-40 right-6 md:right-8 z-20 pointer-events-auto w-10 h-10 md:w-12 md:h-12 rounded-full bg-purple-900/60 backdrop-blur-md border border-purple-500/50 flex items-center justify-center text-white shadow-lg hover:scale-105 transition-transform"
@@ -682,7 +673,7 @@ const CharacterInteractionScreen = () => {
         <div onClick={toggleMenu} className="fixed inset-0 bg-black/50 z-40" />
       )}
 
-      {/* Character Model (Draggable & Responsive Size) */}
+      {/* CHARACTER MODEL (Memoized to prevent reload) */}
       <div className="absolute inset-0 flex items-end justify-center z-10 pointer-events-none">
         <div
           className="absolute bottom-0 w-full flex justify-center pointer-events-auto transition-transform duration-500 ease-in-out"
@@ -693,22 +684,18 @@ const CharacterInteractionScreen = () => {
           onMouseDown={handleDragStart}
           onTouchStart={handleDragStart}
         >
-          {/* RESPONSIVE AVATAR CONTAINER */}
           <div className="w-[90vw] h-[520px] max-w-[420px] md:max-w-[600px] md:h-[70vh] md:w-auto relative overflow-visible bg-transparent">
             <div className="absolute top-0 right-0 bg-white/20 p-1 rounded-full text-white/50 hover:text-white hover:bg-white/40 transition-colors">
               <Move className="w-4 h-4 md:w-6 md:h-6" />
             </div>
-            <CharacterModel
-              animation={animation}
-              modelPath={currentCharacter.modelPath}
-            />
+            {/* THIS IS THE KEY FIX FOR MODEL RELOADING */}
+            {MemoizedCharacterModel}
           </div>
         </div>
       </div>
 
-      {/* Controls - FIXED TO BOTTOM */}
+      {/* Controls */}
       <div className="fixed bottom-0 left-0 w-full z-30 flex flex-col items-center">
-        {/* Chat Input - Responsive Width & Spacing */}
         {showChatInput && isChatMode && (
           <div className="w-full bg-[#1a0b2e] border-t border-purple-500/30 p-3 md:p-6 pointer-events-auto pb-6 md:pb-8">
             <div className="flex items-center gap-3 max-w-4xl mx-auto">
@@ -749,7 +736,6 @@ const CharacterInteractionScreen = () => {
           </div>
         )}
 
-        {/* Standard Buttons - Centered and Contained on Desktop */}
         {!showChatInput && (
           <div className="w-full pb-8 px-6 md:pb-10 max-w-4xl mx-auto">
             <div className="flex justify-between items-center w-full mb-6 px-4 md:px-12">
@@ -830,7 +816,6 @@ const CharacterInteractionScreen = () => {
         )}
       </div>
 
-      {/* Song List Popup - Responsive Width */}
       {showSongList && (
         <>
           <div
