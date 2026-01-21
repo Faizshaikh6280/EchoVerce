@@ -19,6 +19,7 @@ import {
   Send,
   User,
   Move,
+  BrainCircuit, // Using this for the thinking animation
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CHARACTER_CONFIG, TRENDING_SONGS } from "../config";
@@ -49,7 +50,7 @@ const CharacterInteractionScreen = () => {
   const [isListening, setIsListening] = useState(false);
   const [showSongList, setShowSongList] = useState(false);
   const [currentSong, setCurrentSong] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); // Controls Thinking Animation
   const [isBgMusicOn, setIsBgMusicOn] = useState(true);
   const [isSongPlaying, setIsSongPlaying] = useState(false);
   const [chatHistory, setChatHistory] = useState([]);
@@ -67,11 +68,9 @@ const CharacterInteractionScreen = () => {
 
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  // --- 0. CRITICAL: CLEANUP ON UNMOUNT (Solves the issue) ---
+  // --- 0. CLEANUP ON UNMOUNT ---
   useEffect(() => {
-    // This runs only once when component mounts
     return () => {
-      // This runs immediately when component unmounts
       console.log("🔇 Component Unmounting: Killing Background Music");
       if (bgAudioRef.current) {
         bgAudioRef.current.pause();
@@ -97,16 +96,13 @@ const CharacterInteractionScreen = () => {
     setIsProcessing(false);
     console.log(`Switched to new thread for: ${currentCharacter.name}`);
 
-    // Stop previous audio immediately when model changes
     if (bgAudioRef.current) {
       bgAudioRef.current.pause();
-      // Load new track
       bgAudioRef.current.src =
         currentCharacter.music || "/audio/background_music.mp3";
       bgAudioRef.current.volume = 0.2;
       bgAudioRef.current.loop = true;
 
-      // Start playing new track if music is enabled
       if (isBgMusicOn) {
         bgAudioRef.current.play().catch((error) => {
           console.warn("Autoplay prevented on switch:", error);
@@ -129,11 +125,9 @@ const CharacterInteractionScreen = () => {
     if (!isBgMusicOn || currentSong) {
       bgAudio.pause();
     } else if (isListening || animation === "Talking") {
-      // Lower volume when speaking or listening, don't stop it
       bgAudio.volume = 0.05;
       ensurePlaying();
     } else {
-      // Normal volume otherwise
       bgAudio.volume = 0.2;
       ensurePlaying();
     }
@@ -204,7 +198,7 @@ const CharacterInteractionScreen = () => {
 
       if (isVoiceMode) {
         modeSpecificPrompt += `\n\nSTRICT LANGUAGE RULES (VOICE MODE):
-        1. You must ALWAYS reply in  HINDI language (Devanagari script).
+        1. You must ALWAYS reply in HINDI language (Devanagari script).
         2. NEVER use English characters.
         3. Use only Hindi script: हिंदी में जवाब दें।
         4. Make sure you always respond to the point and keep it short and crisp.`;
@@ -256,16 +250,20 @@ const CharacterInteractionScreen = () => {
     }
   };
 
-  // --- 4. VOICE OUTPUT ---
+  // --- 4. VOICE OUTPUT (UPDATED LOGIC) ---
   const speakWithMiniMax = async (text) => {
-    if (!text) return;
+    if (!text) {
+      setIsProcessing(false); // Stop thinking if no text
+      return;
+    }
 
     const audio = audioRef.current;
     if (!audio.paused) {
       audio.pause();
       audio.currentTime = 0;
     }
-    // Set idle initially, onplay will switch to Talking
+
+    // Ensure animation is idle before speaking starts
     if (animation !== "dance") setAnimation("idle");
 
     console.log("🔊 Requesting Audio for:", text);
@@ -294,20 +292,21 @@ const CharacterInteractionScreen = () => {
 
       audio.src = audioUrl;
 
-      // Animation control based on audio events
+      // --- STOP THINKING HERE: Audio is ready to play ---
+      setIsProcessing(false);
+
       audio.onplay = () => {
         if (animation !== "dance") setAnimation("Talking");
-        // Volume ducking handled by central useEffect
       };
 
       audio.onended = () => {
         if (animation !== "dance") setAnimation("idle");
-        // Volume restore handled by central useEffect
       };
 
       audio.onerror = (e) => {
         console.error("Audio Playback Error", e);
         if (animation !== "dance") setAnimation("idle");
+        setIsProcessing(false); // Ensure off on error
         showErrorToast("Audio playback failed. Please try again.");
       };
 
@@ -315,11 +314,12 @@ const CharacterInteractionScreen = () => {
     } catch (error) {
       console.error("❌ TTS Failed:", error.message);
       if (animation !== "dance") setAnimation("idle");
+      setIsProcessing(false); // Ensure off on error
       showErrorToast(`Voice generation failed: ${error.message}`);
     }
   };
 
-  // --- 5. SPEECH RECOGNITION ---
+  // --- 5. SPEECH RECOGNITION (UPDATED LOGIC) ---
   const startListening = () => {
     if (!("webkitSpeechRecognition" in window)) {
       showErrorToast("Please use Google Chrome for voice recognition.");
@@ -345,8 +345,6 @@ const CharacterInteractionScreen = () => {
 
     recognition.onstart = () => {
       setIsListening(true);
-      // NOTE: Animation will switch to 'listen'.
-      // NOTE: Music volume will drop via useEffect because isListening is true.
       if (animation !== "dance") setAnimation("listen");
       resetSilenceTimer();
     };
@@ -372,20 +370,32 @@ const CharacterInteractionScreen = () => {
       if (silenceTimer.current) clearTimeout(silenceTimer.current);
     };
 
+    // --- RECOGNITION END: Start Thinking Animation ---
     recognition.onend = async () => {
       setIsListening(false);
       if (silenceTimer.current) clearTimeout(silenceTimer.current);
       const finalFullText = transcriptAccumulator.current.trim();
 
       if (finalFullText.length > 0) {
-        if (activeMode === "Friend") {
-          setIsProcessing(true);
-          const reply = await fetchLLMResponse(finalFullText, true);
-          setIsProcessing(false);
-          await speakWithMiniMax(reply);
-        } else {
-          setIsProcessing(false);
-          await speakWithMiniMax(finalFullText);
+        // --- 1. START THINKING ANIMATION ---
+        setIsProcessing(true);
+
+        // --- 2. RESET CHARACTER TO IDLE WHILE THINKING ---
+        if (animation !== "dance") setAnimation("idle");
+
+        try {
+          if (activeMode === "Friend") {
+            const reply = await fetchLLMResponse(finalFullText, true);
+            // Note: setIsProcessing(false) is called INSIDE speakWithMiniMax
+            await speakWithMiniMax(reply);
+          } else {
+            // Mimic Mode
+            // Note: setIsProcessing(false) is called INSIDE speakWithMiniMax
+            await speakWithMiniMax(finalFullText);
+          }
+        } catch (error) {
+          console.error("Processing Chain Error:", error);
+          setIsProcessing(false); // Safety net to stop animation if logic fails
         }
       } else {
         if (animation !== "dance") setAnimation("idle");
@@ -431,10 +441,13 @@ const CharacterInteractionScreen = () => {
     ]);
 
     setChatMessage("");
-    setIsProcessing(true);
+    setIsProcessing(true); // Start thinking for chat mode
+
+    // Reset animation to idle while waiting for chat response
+    if (animation !== "dance") setAnimation("idle");
 
     const reply = await fetchLLMResponse(userMessage, false);
-    setIsProcessing(false);
+    setIsProcessing(false); // Stop thinking for chat mode (Text only)
 
     setChatBubbles((prev) => prev.filter((b) => b.id !== userBubbleId));
 
@@ -519,7 +532,7 @@ const CharacterInteractionScreen = () => {
   const handleBack = () => navigate(-1);
   const toggleBgMusic = () => setIsBgMusicOn((prev) => !prev);
 
-  // --- MEMOIZED CHARACTER MODEL (Prevents Reloading) ---
+  // --- MEMOIZED CHARACTER MODEL ---
   const MemoizedCharacterModel = useMemo(() => {
     return (
       <CharacterModel
@@ -585,7 +598,7 @@ const CharacterInteractionScreen = () => {
             ) : (
               <div className="flex items-start gap-2 md:gap-4">
                 <img
-                  src={currentCharacter.face}
+                  src={currentCharacter.image}
                   alt="avatar"
                   className="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 border-yellow-400 shadow-xl object-cover bg-white"
                 />
@@ -675,21 +688,18 @@ const CharacterInteractionScreen = () => {
         <div onClick={toggleMenu} className="fixed inset-0 bg-black/50 z-40" />
       )}
 
-      {/* CHARACTER MODEL (Memoized to prevent reload) */}
+      {/* CHARACTER MODEL (Memoized) */}
       <div className="absolute inset-0 flex items-end justify-center z-10 pointer-events-none">
         <div
           className="absolute bottom-0 w-full flex justify-center pointer-events-auto transition-transform duration-500 ease-in-out"
           style={{
             transform: `translate(${avatarPosition.x}px, ${avatarPosition.y}px)`,
           }}
-          // onMouseDown={handleDragStart}
-          // onTouchStart={handleDragStart}
         >
           <div className="w-[90vw] h-[520px] max-w-[420px] md:max-w-[600px] md:h-[70vh] md:w-auto relative overflow-visible bg-transparent">
             <div className="absolute top-0 right-0 bg-white/20 p-1 rounded-full text-white/50 hover:text-white hover:bg-white/40 transition-colors">
               <Move className="w-4 h-4 md:w-6 md:h-6" />
             </div>
-            {/* THIS IS THE KEY FIX FOR MODEL RELOADING */}
             {MemoizedCharacterModel}
           </div>
         </div>
@@ -764,15 +774,20 @@ const CharacterInteractionScreen = () => {
                   disabled={isProcessing}
                   className={`relative z-10 w-20 h-20 md:w-24 md:h-24 rounded-full flex items-center justify-center text-white shadow-[0_0_20px_5px_rgba(168,85,247,0.4)] transition-all duration-300 active:scale-95 hover:scale-105 ${
                     isProcessing
-                      ? "bg-purple-600/80"
+                      ? "bg-purple-600/80 border-2 border-purple-400"
                       : isListening
                         ? "bg-gradient-to-b from-pink-500 to-purple-600 scale-105 border-2 border-white/20"
                         : "bg-gradient-to-b from-purple-500 to-purple-800"
                   }`}
                 >
                   {isProcessing ? (
-                    <Loader2 className="w-8 h-8 md:w-10 md:h-10 animate-spin" />
+                    // --- THINKING ANIMATION ---
+                    // This icon replaces the Mic when processing
+                    <div className="flex flex-col items-center animate-pulse">
+                      <BrainCircuit className="w-8 h-8 md:w-10 md:h-10 text-white animate-bounce" />
+                    </div>
                   ) : (
+                    // --- STANDARD MIC ICON ---
                     <Mic
                       className={`w-8 h-8 md:w-10 md:h-10 ${
                         isListening ? "animate-pulse" : ""

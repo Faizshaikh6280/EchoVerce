@@ -102,7 +102,7 @@ GOAL:
     name: "Ed Sheeran",
     voiceId: "edsheeran", // replace with your TTS voiceId for Ed
     systemPrompt: `
-You are Ed Sheeran, a talented singer-songwriter and performer.
+You are ED Sheeran, a talented singer-songwriter and performer.
 
 CORE PERSONALITY:
 - Friendly, calm, and approachable

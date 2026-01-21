@@ -11,6 +11,8 @@ import {
   Loader2,
   Bot,
 } from "lucide-react";
+import { CHARACTER_CONFIG } from "./config/index.js";
+import { useGLTF } from "@react-three/drei";
 
 // --- LAZY LOADED ROUTES ---
 // This ensures the browser only downloads the code needed for the current page
@@ -31,7 +33,7 @@ const LOADING_MESSAGES = [
   "Asking Buddha for inner peace and faster wifi... 🧘",
 
   // --- Witty / Vibe ---
-  "Downloading 1TB of pure attitude... 💅",
+  "Downloading 1MB of pure attitude... 💅",
   "Teaching the AI to understand sarcasm... 🙄",
   "Generating main character energy... ✨",
   "Convincing the AI it's not a simulation... 🕶️",
@@ -102,6 +104,19 @@ export default function App() {
 
   // 2. Judges Modal State
   const [showJudgesModal, setShowJudgesModal] = useState(false);
+
+  // --- 1. MODEL PRELOADING LOGIC (New Addition) ---
+  useEffect(() => {
+    // This runs immediately when the App mounts.
+    // It starts downloading all 3D models in the background.
+    console.log("🚀 Starting background preload of 3D Models...");
+
+    Object.values(CHARACTER_CONFIG).forEach((character) => {
+      if (character.modelPath) {
+        useGLTF.preload(character.modelPath);
+      }
+    });
+  }, []);
 
   // --- LOGIC: Screen Size & Modal Triggers ---
   useEffect(() => {
