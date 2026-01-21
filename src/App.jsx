@@ -224,8 +224,19 @@ export default function App() {
                       for high-quality voice generation. Responses may take a
                       few seconds.
                     </p>
+                    <p className="text-gray-400 text-xs leading-relaxed">
+                      We using{" "}
+                      <span className="text-white">
+                        (Free Tier) server services to host
+                      </span>
+                      . Note: On first load, the server might take{" "}
+                      <span className="text-yellow-400">
+                        ~30s to wake up.
+                      </span>{" "}
+                    </p>
                     <div className="mt-2 text-[10px] text-blue-300/80 font-medium bg-blue-500/10 inline-block px-2 py-1 rounded">
-                      ⚡ Future Plan: Custom GPU Servers for instant responses.
+                      ⚡ Future Plan: Custom GPU Servers for instant responses &
+                      our paid server for reliable uptime.
                     </div>
                   </div>
                 </div>
