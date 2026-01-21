@@ -19,17 +19,38 @@ const Avatars = lazy(() => import("./routes/Avatars.jsx"));
 const Charachter = lazy(() => import("./routes/Charachter.jsx"));
 
 // --- WITTY LOADING MESSAGES ---
+// --- MIXED LOADING MESSAGES (FUN + FACTS + CHARACTERS) ---
 const LOADING_MESSAGES = [
+  // --- Character Specific ---
   "Shinchan is hiding the remote... 📺",
-  "Fact: The first AI chatbot, ELIZA, was born in 1966! 📜",
-  "Tuning the autotune for the AI... 🎤",
-  "Fact: AI can now clone a voice with just 3 seconds of audio! 🗣️",
-  "Downloading 1MB of pure attitude... 💅",
-  "Fact: The term 'Artificial Intelligence' was coined in 1956. 🎓",
-  "Asking the AI to be nice to you today... 🤞",
-  "Fact: AI processes information 100,000x faster than neurons! 🧠",
+  "Motu is demanding fresh Samosas... 🥟",
+  "Doraemon is searching his 4D pocket... 🔔",
+  "Oggy is chasing cockroaches out of the server... 🏏",
+  "Arijit Singh is warming up his vocals... 🎶",
+  "Ed Sheeran is finding the perfect chord... 🎸",
+  "Asking Buddha for inner peace and faster wifi... 🧘",
+
+  // --- Witty / Vibe ---
+  "Downloading 1TB of pure attitude... 💅",
+  "Teaching the AI to understand sarcasm... 🙄",
   "Generating main character energy... ✨",
-  "Connecting you to the neural network... 🌐",
+  "Convincing the AI it's not a simulation... 🕶️",
+  "Polishing the pixels for high definition vibes... 💎",
+  "Asking the algorithm to be nice to you... 🤞",
+
+  // --- Cool AI Facts ---
+  "Fact: The first AI chatbot, ELIZA, was born in 1966! 📜",
+  "Fact: The word 'Robot' comes from the Czech word for 'forced labor'. 🤖",
+  "Fact: AI can now clone a voice with just 3 seconds of audio! 🗣️",
+  "Fact: AI processes information 100,000x faster than neurons! 🧠",
+  "Fact: AI has beaten world champions at Chess, Go, and Poker! ♟️",
+  "Fact: Some AIs can 'hallucinate' or dream! 💭",
+  "Fact: AI helps NASA discover new planets! 🪐",
+
+  // --- Tech / Connection ---
+  "Connecting you to the EchoVerse... 🌐",
+  "Tuning the autotune... 🎤",
+  "Feeding the server hamsters... 🐹",
 ];
 
 // --- BEAUTIFUL LOADER COMPONENT ---
@@ -225,7 +246,7 @@ export default function App() {
                   Network issues? Watch the live demo:
                 </p>
                 <a
-                  href="YOUR_VIDEO_LINK_HERE"
+                  href="https://drive.google.com/file/d/1rt4QbLkbxI43kOrNVEUyWDa25sl3C_uk/view?usp=sharing"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-gray-800/50 border border-gray-700 hover:bg-gray-800 transition-colors group"

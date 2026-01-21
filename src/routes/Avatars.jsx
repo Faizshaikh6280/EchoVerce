@@ -267,7 +267,7 @@ const Avatars = () => {
 
       {/* --- FLOATING VIDEO BUTTON (Updated) --- */}
       <a
-        href="YOUR_DEMO_VIDEO_LINK_HERE" // <--- REPLACE THIS LINK
+        href="https://drive.google.com/file/d/1rt4QbLkbxI43kOrNVEUyWDa25sl3C_uk/view?usp=sharing" // <--- REPLACE THIS LINK
         target="_blank"
         rel="noopener noreferrer"
         // Updated classes for a Pill shape instead of circle
